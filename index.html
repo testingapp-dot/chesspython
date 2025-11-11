@@ -2,41 +2,12 @@
 <html lang="en">
 <head>
 <meta charset="utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="viewport" content="width=device-width,initial-scale=1.0" />
 <title>Hex Game — Multiplayer (PWA-ready)</title>
-<link rel="manifest" href="manifest.json">
 <style>
-html, body {
-  height: 100%;
-  margin: 0;
-  background: #14151a;
-  font-family: Arial, Helvetica, sans-serif;
-  overflow: hidden; /* stop scrolling */
-}
-
-#game {
-  display: block;
-  background: #14151a;
-  touch-action: none;
-  width: 100vw;     /* full viewport width */
-  height: 100vh;    /* full viewport height */
-  object-fit: contain; /* keep aspect ratio if possible */
-}
-
-.note {
-  position: fixed;
-  left: 8px;
-  bottom: 8px;
-  color: #ccc;
-  font-size: 12px;
-}
-
-@media (orientation: landscape) {
-  #game {
-    width: 100vw;
-    height: 100dvh;
-  }
-}
+  html,body{height:100%;margin:0;background:#14151a;font-family:Arial, Helvetica, sans-serif}
+  #game{display:block;margin:0 auto;background:#14151a;touch-action:none}
+  .note{position:fixed;left:8px;bottom:8px;color:#ccc;font-size:12px}
 </style>
 </head>
 <body>
@@ -71,26 +42,6 @@ const canvas = document.getElementById('game');
 canvas.width = WIDTH; canvas.height = HEIGHT;
 const ctx = canvas.getContext('2d');
 ctx.textBaseline = 'top';
-
-function resizeCanvas() {
-  const dpr = window.devicePixelRatio || 1;
-  const width = window.innerWidth;
-  const height = window.innerHeight;
-
-  // ВАЖНО: canvas.width = физические пиксели
-  canvas.width = width * dpr;
-  canvas.height = height * dpr;
-
-  // Визуальный размер (CSS)
-  canvas.style.width = width + 'px';
-  canvas.style.height = height + 'px';
-
-  // Масштаб контекста
-  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-}
-
-window.addEventListener('resize', resizeCanvas);
-resizeCanvas();
 
 // Grid construction (q,r) points and index map
 const pts = []; // {pos:[x,y], q, r}
@@ -413,15 +364,8 @@ window.addEventListener('keydown', (ev)=>{
   }
 });
 
-function canvasPos(ev) {
-  const rect = canvas.getBoundingClientRect();
-  const dpr = window.devicePixelRatio || 1;
-
-  // реальные координаты внутри canvas
-  const x = (ev.clientX - rect.left) * (canvas.width / rect.width);
-  const y = (ev.clientY - rect.top) * (canvas.height / rect.height);
-
-  return { x, y };
+function canvasPos(ev){
+  const rect = canvas.getBoundingClientRect(); return { x: Math.round((ev.clientX-rect.left)*(canvas.width/rect.width)), y: Math.round((ev.clientY-rect.top)*(canvas.height/rect.height)) };
 }
 
 // --- Main loop ---
@@ -475,11 +419,11 @@ if ('serviceWorker' in navigator){
   const manifest = {
   name: 'Hex Game',
   short_name: 'HexGame',
-  start_url: '.',
+  start_url: 'https://testingapp-dot.github.io/chesspygame/',
   display: 'standalone',
   icons: [
     {
-      src: 'https://testingapp-dot.github.io/chesspython/favicon.png',   // здесь путь к файлу PNG
+      src: 'https://testingapp-dot.github.io/chesspygame/favicon.png',   // здесь путь к файлу PNG
       sizes: '512x512',      // размер иконки
       type: 'image/png'      // MIME тип — обязательно 'image/png'
     }
@@ -500,6 +444,3 @@ function logState(){ console.log({con, tris, score, moves, turn, room_chosen, pl
 </script>
 </body>
 </html>
-
-
-
