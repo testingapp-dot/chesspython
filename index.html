@@ -1,446 +1,693 @@
 <!doctype html>
 <html lang="en">
+
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1.0" />
-<title>Hex Game — Multiplayer (PWA-ready)</title>
-<style>
-  html,body{height:100%;margin:0;background:#14151a;font-family:Arial, Helvetica, sans-serif}
-  #game{display:block;margin:0 auto;background:#14151a;touch-action:none}
-  .note{position:fixed;left:8px;bottom:8px;color:#ccc;font-size:12px}
-</style>
+  <meta charset="utf-8" />
+  <!-- mobile-friendly viewport, lock zoom so game remains usable -->
+  <!-- Fullscreen and portrait lock -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="screen-orientation" content="portrait">
+  <meta name="x5-orientation" content="portrait">
+  <meta name="x5-fullscreen" content="true">
+  <meta name="full-screen" content="yes">
+  <meta name="orientation" content="portrait">
+
+  <title>Hex Game — Multiplayer (Mobile)</title>
+  <style>
+    html,
+    body {
+      height: 100%;
+      margin: 0;
+      background: #14151a;
+      font-family: Arial, Helvetica, sans-serif;
+      -webkit-tap-highlight-color: transparent;
+      touch-action: none;
+      overflow: hidden;
+      /* prevent scroll */
+    }
+
+    .wrap {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      /* fullscreen height */
+      width: 100vw;
+      /* fullscreen width */
+      padding: 0;
+      /* remove padding */
+    }
+
+    #game {
+      display: block;
+      background: #14151a;
+      width: 100vw;
+      height: 100vh;
+      border-radius: 0;
+      box-shadow: none;
+      touch-action: none;
+    }
+
+    .note {
+      position: fixed;
+      left: 8px;
+      bottom: 8px;
+      color: #ccc;
+      font-size: 12px
+    }
+  </style>
 </head>
+
 <body>
-<canvas id="game" width="1000" height="700"></canvas>
-<div class="note">Tip: run the provided server.js and open this page. Works offline as PWA after install.</div>
-<script>
-/* Hex Game — single-file PWA-ready client
-   - Draws nearly-identical UI to original Python/pygame client
-   - Connects to WebSocket server at ws://localhost:8080
-   - Implements lobby (create/join/start), authoritative state updates, local fallback
-   - Self-registers a simple service-worker and manifest via Blob so this single file can behave as a PWA
-*/
+  <div class="wrap">
+    <canvas id="game"></canvas>
+  </div>
+  <div class="note">Mobile-first layout — tap dots to play. Run server.js and open this page.</div>
 
-// --- Constants (keep in sync with server) ---
-const R = 4;      // grid radius
-const STEP = 4;   // required path length
-const SP = 60;    // spacing
-const DR = 10;    // dot radius
-const STEP_POINTS = 4; // step variable name to match original
-const WIDTH = 1000, HEIGHT = 700;
+  <script>
+    /*
+     Mobile-first Hex Game client (updated to show nicknames in player panels)
+    */
 
-// Colors & fonts
-const BG = '#14171b';
-const DOT = '#222629';
-const LINE_COLOR = '#ffffff';
-const PLAYERS_COLORS = [ '#ff0000', '#ffff00', '#00ff00', '#0000ff' ];
-const FONT = '22px Arial';
-const BIG_FONT = '64px Arial';
+    ///// CONFIG - keep these logical values but they will be scaled to screen
+    const LOGICAL_BASE_W = 1000;
+    const LOGICAL_BASE_H = 700;
+    const BASE_SP = 60;
+    const BASE_DR = 10;
+    const BASE_FONT_PX = 22;
+    const BASE_BIG_FONT_PX = 64;
 
-// Canvas
-const canvas = document.getElementById('game');
-canvas.width = WIDTH; canvas.height = HEIGHT;
-const ctx = canvas.getContext('2d');
-ctx.textBaseline = 'top';
+    const R = 4;
+    const STEP_POINTS = 4; // required path length
+    const DEFAULT_MOVES = 15;
 
-// Grid construction (q,r) points and index map
-const pts = []; // {pos:[x,y], q, r}
-const idx = {}; // "q,r"->index
-(function buildGrid(){
-  for (let q = -R+1; q < R; q++){
-    const r1 = Math.max(-R+1, -q-R+1);
-    const r2 = Math.min(R-1, -q+R-1);
-    for (let rr = r1; rr <= r2; rr++){
-      const pos = toxy(q,rr);
-      idx[`${q},${rr}`] = pts.length;
-      pts.push({ pos, q, r: rr });
+    ///// Networking
+    const WS_URL = 'wss://frosty-colden.185-234-114-50.plesk.page';
+
+    ///// DOM + canvas setup (responsive)
+    const canvas = document.getElementById('game');
+    const ctx = canvas.getContext('2d', { alpha: false });
+
+    function setupCanvasSize() {
+      const cssWidth = Math.min(window.innerWidth * 0.92, 420);
+      const aspect = LOGICAL_BASE_H / LOGICAL_BASE_W;
+      const cssHeight = Math.round(cssWidth * aspect);
+
+      const DPR = window.devicePixelRatio || 1;
+      canvas.style.width = cssWidth + 'px';
+      canvas.style.height = cssHeight + 'px';
+      canvas.width = Math.round(cssWidth * DPR);
+      canvas.height = Math.round(cssHeight * DPR);
+
+      WIDTH = cssWidth;
+      HEIGHT = cssHeight;
+      scale = cssWidth / LOGICAL_BASE_W;
+      DPR_SCALE = DPR;
+
+      ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+
+      SP = Math.max(12, Math.round(BASE_SP * scale));
+      DR = Math.max(6, Math.round(BASE_DR * scale));
+      FONT = `${Math.max(10, Math.round(BASE_FONT_PX * scale))}px Arial`;
+      BIG_FONT = `${Math.min(48, Math.max(24, Math.round(BASE_BIG_FONT_PX * Math.max(0.6, scale))))}px Arial`;
+      LINE_THICKNESS = Math.max(2, Math.round(4 * scale));
     }
-  }
-})();
+    let WIDTH, HEIGHT, scale, SP, DR, FONT, BIG_FONT, LINE_THICKNESS, DPR_SCALE;
+    setupCanvasSize();
+    window.addEventListener('resize', () => { setupCanvasSize(); drawImmediate(); });
 
-function toxy(q,r){
-  const x = SP*(1.5*q);
-  const y = SP*(Math.sqrt(3)*(r + q/2));
-  return [ Math.round(x + WIDTH/2), Math.round(y + HEIGHT/2 + 40) ];
-}
+    ///// Colors
+    const BG = '#14171b';
+    const DOT = '#222629';
+    const LINE_COLOR = '#ffffff';
+    const PLAYERS_COLORS = ['#ff0000', '#ffff00', '#00ff00', '#0000ff'];
 
-// Game state
-let con = []; // list of [a,b] with a<b
-let tris = []; // list of {points:[a,b,c], owner}
-let sel = null; let turn = 0;
-let moves = [15,15,15,15]; let score = [0,0,0,0];
-let game_over = false; let winner = null;
-let tri_delay = 400; // ms
-let animating = false; let waiting_for_server = false;
-
-// Lobby state
-let room_chosen = null; let player_index = null; let is_host = false; let lobby_players = [];
-let input_active = null; let input_name = 'Player'; let input_room = 'room1';
-
-// Mouse interaction
-let dragging = false; let drag_pos = null;
-
-// --- Drawing helpers ---
-function drawHexagon(ctx, color, center, radius, fill=true, width=0){
-  ctx.beginPath();
-  for (let i=0;i<6;i++){
-    const ang = (Math.PI/180) * (60*i - 30);
-    const x = center[0] + radius * Math.cos(ang);
-    const y = center[1] + radius * Math.sin(ang);
-    if (i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
-  }
-  ctx.closePath();
-  if (fill) ctx.fillStyle = color, ctx.fill();
-  if (width>0) ctx.lineWidth = width, ctx.strokeStyle = LINE_COLOR, ctx.stroke();
-}
-
-function drawLine(ctx, a, b, thickness=4){
-  ctx.beginPath(); ctx.moveTo(a[0],a[1]); ctx.lineTo(b[0],b[1]); ctx.lineWidth = thickness; ctx.strokeStyle = LINE_COLOR; ctx.stroke();
-}
-
-function drawPlayerPanels(){
-  const pad = 10; const box_w = 220, box_h = 80;
-  const positions = [ [pad,pad], [WIDTH-box_w-pad,pad], [pad,HEIGHT-box_h-pad], [WIDTH-box_w-pad,HEIGHT-box_h-pad] ];
-  ctx.font = FONT; ctx.textBaseline='top';
-  for (let i=0;i<4;i++){
-    const [x,y] = positions[i];
-    const color = PLAYERS_COLORS[i];
-    const active = (i === turn);
-    const disabled = (score[i] >= 15 || moves[i] <= 0);
-    const rect_color = disabled ? '#3c3c46' : (active ? shadeColor(color,40) : '#323238');
-    // box
-    roundRect(ctx,x,y,box_w,box_h,10,true,rect_color);
-    ctx.lineWidth = 3; ctx.strokeStyle = color; roundRect(ctx,x,y,box_w,box_h,10,false); // border
-    ctx.fillStyle = '#fff';
-    ctx.fillText(`P${i+1}`, x+10, y+8);
-    ctx.fillText(`Очки: ${score[i]}`, x+10, y+40);
-  }
-}
-
-function shadeColor(hex, amt){
-  // hex like #rrggbb, amt positive to lighten
-  const c = hex.replace('#','');
-  const num = parseInt(c,16);
-  let r = (num >> 16) + amt; if (r>255) r=255; if(r<0) r=0;
-  let g = ((num >> 8) & 0x00FF) + amt; if (g>255) g=255; if(g<0) g=0;
-  let b = (num & 0x0000FF) + amt; if (b>255) b=255; if(b<0) b=0;
-  return `rgb(${r},${g},${b})`;
-}
-
-function roundRect(ctx,x,y,w,h,r, fill=false, fillStyle='#000'){
-  ctx.beginPath(); ctx.moveTo(x+r,y); ctx.arcTo(x+w,y,x+w,y+h,r); ctx.arcTo(x+w,y+h,x,y+h,r); ctx.arcTo(x,y+h,x,y,r); ctx.arcTo(x,y,x+w,y,r); ctx.closePath();
-  if (fill){ ctx.fillStyle = fillStyle; ctx.fill(); }
-  else ctx.stroke();
-}
-
-function drawFrame(sel_local=null, dragPos=null, temp_centers=null){
-  ctx.fillStyle = BG; ctx.fillRect(0,0,WIDTH,HEIGHT);
-  // edges
-  ctx.lineWidth = 4; ctx.strokeStyle = LINE_COLOR;
-  for (const [a,b] of con){ drawLine(ctx, pts[a].pos, pts[b].pos, 4); }
-  // triangles
-  for (const tri of tris){
-    try{
-      const ptsList = tri.points.map(i=>pts[i].pos);
-      ctx.beginPath(); ctx.moveTo(ptsList[0][0],ptsList[0][1]); ctx.lineTo(ptsList[1][0],ptsList[1][1]); ctx.lineTo(ptsList[2][0],ptsList[2][1]); ctx.closePath();
-      ctx.fillStyle = PLAYERS_COLORS[tri.owner] || PLAYERS_COLORS[0]; ctx.fill();
-    }catch(e){ }
-  }
-  // temp centers for animation
-  if (temp_centers){
-    for (const [center, color] of temp_centers){ drawHexagon(ctx, color, center, 10, true); }
-  }
-  // points
-  for (const p of pts){ drawHexagon(ctx, DOT, p.pos, DR, true); }
-  // dragging preview
-  if (sel_local !== null && dragPos){ drawLine(ctx, pts[sel_local].pos, dragPos, 4); }
-  drawPlayerPanels();
-}
-
-// --- Utilities ---
-function near(pos){
-  for (let i=0;i<pts.length;i++){
-    const p = pts[i].pos; const dx = p[0]-pos[0], dy = p[1]-pos[1];
-    if (dx*dx + dy*dy <= (DR+8)*(DR+8)) return i;
-  }
-  return null;
-}
-
-function sortedPair(a,b){ return a<b ? [a,b] : [b,a]; }
-
-// Equivalent of line_ok in Python: returns array of indices or []
-function line_ok(a,b){
-  const p1 = pts[a], p2 = pts[b];
-  const q1 = p1.q, r1 = p1.r, q2 = p2.q, r2 = p2.r;
-  const d = Math.max(Math.abs(q1-q2), Math.abs(r1-r2), Math.abs((q1+r1)-(q2+r2)));
-  if (d===0) return [];
-  if (!((q1-q2===0) || (r1-r2===0) || ((q1+r1)-(q2+r2)===0))) return [];
-  const dq = (q2-q1)/d, dr = (r2-r1)/d;
-  const path = [];
-  for (let i=0;i<=d;i++){
-    const q = Math.round(q1 + dq*i), r = Math.round(r1 + dr*i);
-    const key = `${q},${r}`;
-    if (key in idx) path.push(idx[key]); else return [];
-  }
-  return path;
-}
-
-function find_triangles_local(){
-  const found = [];
-  const edgesSet = new Set(con.map(e=>`${e[0]}-${e[1]}`));
-  const n = pts.length;
-  for (let a=0;a<n;a++){
-    for (let b=a+1;b<n;b++){
-      if (!edgesSet.has(`${a}-${b}`)) continue;
-      for (let c=b+1;c<n;c++){
-        if (edgesSet.has(`${b}-${c}`) && edgesSet.has(`${a}-${c}`)) found.push([a,b,c]);
-      }
-    }
-  }
-  return found;
-}
-
-function tri_center(tri_pts){
-  const xs = tri_pts.map(p=>p[0]); const ys = tri_pts.map(p=>p[1]);
-  return [ Math.floor((xs[0]+xs[1]+xs[2])/3), Math.floor((ys[0]+ys[1]+ys[2])/3) ];
-}
-
-function end_if_needed(){
-  const active_players = [];
-  for (let i=0;i<4;i++) if (moves[i] > 0 && score[i] < 15) active_players.push(i);
-  if (active_players.length <= 1){ game_over = true; winner = score.indexOf(Math.max(...score)); return true; }
-  return false;
-}
-
-function next_turn_local(){
-  for (let i=0;i<4;i++){ turn = (turn+1)%4; if (moves[turn] > 0 && score[turn] < 15) break; }
-}
-
-// animate triangle centers sequentially
-async function animateTriangleCenters(new_tris_list){
-  animating = true;
-  const temp = [];
-  for (const item of new_tris_list){
-    temp.push([item.center, item.color]);
-    drawFrame(null,null,temp);
-    await new Promise(resolve => setTimeout(resolve, tri_delay));
-  }
-  animating = false;
-}
-
-// --- WebSocket client ---
-const WS_URL = 'wss://frosty-colden.185-234-114-50.plesk.page';
-class WSClient {
-  constructor(url){ this.url = url; this.ws = null; this.queue = []; this.connected = false; }
-  connect(){
-    return new Promise((res,rej)=>{
-      try{
-        this.ws = new WebSocket(this.url);
-        this.ws.addEventListener('open', ()=>{ this.connected = true; console.log('WS open'); res(); });
-        this.ws.addEventListener('message', e=>{ try{ const d=JSON.parse(e.data); this.queue.push(d); console.log('SERVER MSG:', d);}catch(err){} });
-        this.ws.addEventListener('close', ()=>{ this.connected = false; this.queue.push({type:'closed'}); console.log('WS closed'); });
-        this.ws.addEventListener('error', (err)=>{ console.error('WS error',err); });
-      }catch(e){ rej(e); }
-    });
-  }
-  send(obj){ if (this.ws && this.connected) this.ws.send(JSON.stringify(obj)); }
-  recv_nowait(){ return this.queue.length ? this.queue.shift() : null; }
-}
-const ws_client = new WSClient(WS_URL);
-
-async function handle_server_messages(){
-  const data = ws_client.recv_nowait(); if (!data) return;
-  const t = data.type;
-  if (t === 'created'){
-    room_chosen = data.room;
-    player_index = data.playerIndex;
-    console.log('created', room_chosen, player_index);
-  } else if (t === 'joined'){
-    room_chosen = data.room;
-    player_index = data.playerIndex;
-    console.log('joined', room_chosen, player_index);
-  } else if (t === 'lobby'){
-    lobby_players = data.players || [];
-    const hostIndex = (typeof data.hostIndex !== 'undefined') ? data.hostIndex : 0;
-    is_host = (player_index === hostIndex);
-  } else if (t === 'start'){
-    con = [];
-    tris = [];
-    score = Array.isArray(data.score) ? data.score : score;
-    moves = Array.isArray(data.moves) ? data.moves : moves;
-    turn = (typeof data.turn !== 'undefined') ? data.turn : turn;
-    game_over = (typeof data.game_over !== 'undefined') ? data.game_over : false;
-    winner = (typeof data.winner !== 'undefined') ? data.winner : null;
-    waiting_for_server = false;
-  } else if (t === 'state_update'){
-    console.log('Received state_update:', data);
-    // authoritative edges
-    try { con = (data.con || []).map(pair => [pair[0], pair[1]]); } catch(e){ con = []; }
-    // tris
-    if (Array.isArray(data.tris)){
-      tris = data.tris.map(tr => ({ points: tr.points.slice(), owner: tr.owner }));
-    } else {
-      const new_tris = data.new_tris || [];
-      for (const tr of new_tris){
-        const pts_trip = tr.points.slice();
-        const owner = tr.owner;
-        if (!tris.find(t=>arraysEqual(t.points.slice().sort(), pts_trip.slice().sort()))){
-          tris.push({points:pts_trip, owner});
+    ///// Grid (rebuild using dynamic SP / scale)
+    const pts = [];
+    const idx = {};
+    function buildGrid() {
+      pts.length = 0;
+      for (let q = -R + 1; q < R; q++) {
+        const r1 = Math.max(-R + 1, -q - R + 1);
+        const r2 = Math.min(R - 1, -q + R - 1);
+        for (let rr = r1; rr <= r2; rr++) {
+          const pos = toxy(q, rr);
+          idx[`${q},${rr}`] = pts.length;
+          pts.push({ pos, q, r: rr });
         }
       }
     }
-    score = Array.isArray(data.score) ? data.score : score;
-    moves = Array.isArray(data.moves) ? data.moves : moves;
-    turn = (typeof data.turn !== 'undefined') ? data.turn : turn;
-    game_over = (typeof data.game_over !== 'undefined') ? data.game_over : game_over;
-    winner = (typeof data.winner !== 'undefined') ? data.winner : winner;
-    waiting_for_server = false;
-  }
-}
-
-function arraysEqual(a,b){ if (a.length!==b.length) return false; for(let i=0;i<a.length;i++) if (a[i]!==b[i]) return false; return true; }
-
-// --- Input handling (canvas) ---
-canvas.addEventListener('mousemove', (ev)=>{
-  const pos = canvasPos(ev); if (sel !== null && !animating && !waiting_for_server) drag_pos = [pos.x,pos.y];
-});
-canvas.addEventListener('mousedown', async (ev)=>{
-  const pos = canvasPos(ev); const mx = pos.x, my = pos.y;
-  // If in lobby (room_chosen===null and empty board)
-  if (room_chosen === null && con.length===0 && tris.length===0){
-    // simple hitboxes similar to Python positions
-    if (50 <= mx && mx <= 350 && 120 <= my && my <= 160) { input_active = 'name'; }
-    else if (50 <= mx && mx <= 350 && 180 <= my && my <= 220) { input_active = 'room'; }
-    else if (380 <= mx && mx <= 520 && 120 <= my && my <= 160){ // Create
-      if (!ws_client.connected){ try{ await ws_client.connect(); }catch(e){ console.error('connect failed',e); return; } }
-      ws_client.send({ type:'create', room: input_room, name: input_name });
-    } else if (380 <= mx && mx <= 520 && 180 <= my && my <= 220){ // Join
-      if (!ws_client.connected){ try{ await ws_client.connect(); }catch(e){ console.error('connect failed',e); return; } }
-      ws_client.send({ type:'join', room: input_room, name: input_name });
-    } else if (800 <= mx && mx <= 940 && 120 <= my && my <= 160 && is_host && room_chosen){ // Start
-      ws_client.send({ type:'start', room: room_chosen });
+    function toxy(q, r) {
+      const x = SP * (1.5 * q);
+      const y = SP * (Math.sqrt(3) * (r + q / 2));
+      const cssW = canvas.clientWidth;
+      const cssH = canvas.clientHeight;
+      // center and a small dynamic vertical offset
+      return [Math.round(x + cssW / 2), Math.round(y + cssH / 2 + Math.max(20 * scale, 10))];
     }
-    return;
-  }
+    buildGrid();
 
-  if (animating || waiting_for_server) return;
-  if (game_over) return;
-  if (score[turn] >= 15 || moves[turn] <= 0){ next_turn_local(); return; }
-  const i = near([mx,my]);
-  if (i !== null){
-    if (sel === null){ sel = i; drag_pos = [mx,my]; }
-    else if (i !== sel){
-      const path = line_ok(sel, i);
-      if (path.length === STEP_POINTS){
-        let made_line=false;
-        for (let k=0;k<path.length-1;k++){ const a=path[k], b=path[k+1]; const edge = sortedPair(a,b); if (!con.find(e=>e[0]===edge[0]&&e[1]===edge[1])) made_line=true; }
-        if (made_line){
-          if (ws_client.connected && room_chosen !== null){ waiting_for_server = true; try{ ws_client.send({ type:'make_move', room: room_chosen, path: path }); }catch(err){ console.error('send move failed',err); waiting_for_server=false; } }
-          else { // local-only
-            for (let k=0;k<path.length-1;k++){ const a=path[k], b=path[k+1]; const edge = sortedPair(a,b); if (!con.find(e=>e[0]===edge[0]&&e[1]===edge[1])) con.push(edge); }
-            const all_tris = find_triangles_local();
-            const existing_sets = new Set(tris.map(t=>t.points.slice().sort((a,b)=>a-b).join(',')));
-            const new_tris_raw = all_tris.filter(t => !existing_sets.has(t.slice().sort((a,b)=>a-b).join(',')));
-            const new_tris = [];
-            for (const t of new_tris_raw){ const tri_pts = [ pts[t[0]].pos, pts[t[1]].pos, pts[t[2]].pos ]; const center = tri_center(tri_pts); new_tris.push({ points: t, center, color: PLAYERS_COLORS[turn] }); }
-            if (new_tris.length){ await animateTriangleCenters(new_tris); for (const nt of new_tris){ tris.push({ points: nt.points, owner: turn }); score[turn]++; } }
-            moves[turn]--; if (!end_if_needed()) next_turn_local();
+    ///// Game state
+    let con = [];
+    let tris = [];
+    let sel = null, turn = 0;
+    let moves = [DEFAULT_MOVES, DEFAULT_MOVES, DEFAULT_MOVES, DEFAULT_MOVES];
+    let score = [0, 0, 0, 0];
+    let game_over = false, winner = null;
+    let tri_delay = Math.max(120, Math.round(400 * scale));
+    let animating = false, waiting_for_server = false;
+
+    ///// Lobby & UI state
+    let room_chosen = null, player_index = null, is_host = false, lobby_players = [];
+    let input_active = null, input_name = 'Player', input_room = 'room1';
+    let selectedPlayerCount = 4;
+    let servers = [];
+    let serversButtonRects = [];
+    let showWinnerOverlay = false;
+    let winnerOverlayData = null;
+    let winnerOverlayTimeout = null;
+
+    // ---------- NEW: playerNames array (index -> nickname) ----------
+    let playerNames = []; // will be populated from server messages (playerNames array or lobby players)
+
+    /* scaled helpers */
+    function sx(x) { return Math.round(x * scale); }
+    function sy(y) { return Math.round(y * scale); }
+    function sRect(x, y, w, h) { return { x: sx(x), y: sy(y), w: Math.round(w * scale), h: Math.round(h * scale) }; }
+
+    function drawHexagonLocal(ctx, color, center, radius, fill = true, width = 0) {
+      ctx.beginPath();
+      for (let i = 0; i < 6; i++) {
+        const ang = (Math.PI / 180) * (60 * i - 30);
+        const x = center[0] + radius * Math.cos(ang);
+        const y = center[1] + radius * Math.sin(ang);
+        if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+      }
+      ctx.closePath();
+      if (fill) { ctx.fillStyle = color; ctx.fill(); }
+      if (width > 0) { ctx.lineWidth = width; ctx.strokeStyle = LINE_COLOR; ctx.stroke(); }
+    }
+
+    function drawLineLocal(ctx, a, b, thickness = LINE_THICKNESS) {
+      ctx.beginPath(); ctx.moveTo(a[0], a[1]); ctx.lineTo(b[0], b[1]); ctx.lineWidth = thickness; ctx.strokeStyle = LINE_COLOR; ctx.stroke();
+    }
+
+    function roundRectLocal(ctx, x, y, w, h, r, fill = false, fillStyle = '#000') {
+      ctx.beginPath(); ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r); ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath();
+      if (fill) { ctx.fillStyle = fillStyle; ctx.fill(); }
+      else ctx.stroke();
+    }
+
+    function shadeColor(hex, amt) {
+      const c = hex.replace('#', '');
+      const num = parseInt(c, 16);
+      let r = (num >> 16) + amt; if (r > 255) r = 255; if (r < 0) r = 0;
+      let g = ((num >> 8) & 0x00FF) + amt; if (g > 255) g = 255; if (g < 0) g = 0;
+      let b = (num & 0x0000FF) + amt; if (b > 255) b = 255; if (b < 0) b = 0;
+      return `rgb(${r},${g},${b})`;
+    }
+
+    // ---------- UPDATED: drawPlayerPanels shows nicknames ----------
+    function drawPlayerPanels() {
+      // responsive box sizes
+      const pad = Math.max(6, sx(6));
+      const box_w = Math.min(sx(220), Math.round(canvas.clientWidth * 0.45));
+      const box_h = Math.min(sy(80), Math.round(canvas.clientHeight * 0.16));
+      const positions = [
+        [pad, pad],
+        [canvas.clientWidth - box_w - pad, pad],
+        [pad, canvas.clientHeight - box_h - pad],
+        [canvas.clientWidth - box_w - pad, canvas.clientHeight - box_h - pad]
+      ];
+      ctx.font = FONT; ctx.textBaseline = 'top';
+      for (let i = 0; i < 4; i++) {
+        const [x, y] = positions[i];
+        const color = PLAYERS_COLORS[i];
+        const active = (i === turn);
+        const disabled = (score[i] >= 15 || moves[i] <= 0);
+        const rect_color = disabled ? '#3c3c46' : (active ? shadeColor(color, 40) : '#323238');
+        roundRectLocal(ctx, x, y, box_w, box_h, 10, true, rect_color);
+        ctx.lineWidth = Math.max(1, Math.round(3 * scale)); ctx.strokeStyle = color; roundRectLocal(ctx, x, y, box_w, box_h, 10, false);
+        ctx.fillStyle = '#fff';
+
+        // get the display name (prefer playerNames, fallback to lobby_players name, fallback to P#)
+        let displayName = null;
+        if (Array.isArray(playerNames) && playerNames[i]) displayName = playerNames[i];
+        else {
+          const p = lobby_players.find(pp => pp.index === i);
+          if (p && p.name) displayName = p.name;
+        }
+        if (!displayName) displayName = `P${i + 1}`;
+        // clamp length
+        const shortName = displayName.length > 14 ? displayName.slice(0, 13) + '…' : displayName;
+
+        ctx.font = `${Math.max(10, Math.round(16 * scale))}px Arial`;
+        ctx.fillText(shortName, x + sx(10), y + sy(8));
+        ctx.font = `${Math.max(10, Math.round(14 * scale))}px Arial`;
+        ctx.fillText(`Score: ${score[i]}`, x + sx(10), y + sy(34));
+        ctx.fillText(`Moves: ${moves[i]}`, x + sx(110), y + sy(34));
+      }
+    }
+
+    function drawFrame(sel_local = null, dragPos = null, temp_centers = null) {
+      ctx.fillStyle = BG; ctx.fillRect(0, 0, canvas.clientWidth, canvas.clientHeight);
+
+      // edges
+      ctx.lineWidth = LINE_THICKNESS; ctx.strokeStyle = LINE_COLOR;
+      for (const [a, b] of con) { drawLineLocal(ctx, pts[a].pos, pts[b].pos, LINE_THICKNESS); }
+
+      // triangles -> small dot center
+      for (const tri of tris) {
+        try {
+          const ptsList = tri.points.map(i => pts[i].pos);
+          const color = PLAYERS_COLORS[tri.owner] || PLAYERS_COLORS[0];
+          const cx = (ptsList[0][0] + ptsList[1][0] + ptsList[2][0]) / 3;
+          const cy = (ptsList[0][1] + ptsList[1][1] + ptsList[2][1]) / 3;
+          drawHexagonLocal(ctx, color, [cx, cy], Math.max(6, Math.round(8 * scale)), true);
+        } catch (e) { }
+      }
+
+      // temp centers
+      if (temp_centers) {
+        for (const [center, color] of temp_centers) { drawHexagonLocal(ctx, color, center, Math.max(8, Math.round(10 * scale)), true); }
+      }
+
+      // points
+      for (const p of pts) { drawHexagonLocal(ctx, DOT, p.pos, Math.max(4, Math.round(DR)), true); }
+
+      // dragging preview
+      if (sel_local !== null && dragPos) { drawLineLocal(ctx, pts[sel_local].pos, dragPos, LINE_THICKNESS); }
+
+      // player panels (uses nicknames)
+      drawPlayerPanels();
+
+      // winner overlay (if present)
+      if (showWinnerOverlay && winnerOverlayData) {
+        ctx.fillStyle = 'rgba(0,0,0,0.86)'; ctx.fillRect(0, 0, canvas.clientWidth, canvas.clientHeight);
+        ctx.font = `bold ${Math.max(18, Math.round(28 * scale))}px Arial`; ctx.fillStyle = '#fff';
+        const winnerNameText = winnerOverlayData.winnerName || (typeof winner === 'number' && playerNames[winner] ? playerNames[winner] : ('P' + ((winner || 0) + 1)));
+        const text = `${winnerOverlayData.emoji || '🏆'}  Победитель: ${winnerNameText}`;
+        const w = ctx.measureText(text).width;
+        ctx.fillText(text, (canvas.clientWidth - w) / 2, canvas.clientHeight / 2 - 12 * scale);
+      }
+    }
+
+    function drawImmediate() { drawFrame(sel, drag_pos); }
+
+    function nearScaled(pos) {
+      const hitR = Math.max(18, Math.round((DR + 8) * Math.max(1, 1 / scale)));
+      for (let i = 0; i < pts.length; i++) {
+        const p = pts[i].pos; const dx = p[0] - pos[0], dy = p[1] - pos[1];
+        if (dx * dx + dy * dy <= hitR * hitR) return i;
+      }
+      return null;
+    }
+
+    function sortedPair(a, b) { return a < b ? [a, b] : [b, a]; }
+
+    function line_ok_scaled(a, b) {
+      const p1 = pts[a], p2 = pts[b];
+      const q1 = p1.q, r1 = p1.r, q2 = p2.q, r2 = p2.r;
+      const d = Math.max(Math.abs(q1 - q2), Math.abs(r1 - r2), Math.abs((q1 + r1) - (q2 + r2)));
+      if (d === 0) return [];
+      if (!((q1 - q2 === 0) || (r1 - r2 === 0) || ((q1 + r1) - (q2 + r2) === 0))) return [];
+      const dq = (q2 - q1) / d, dr = (r2 - r1) / d;
+      const path = [];
+      for (let i = 0; i <= d; i++) {
+        const q = Math.round(q1 + dq * i), r = Math.round(r1 + dr * i);
+        const key = `${q},${r}`;
+        if (key in idx) path.push(idx[key]); else return [];
+      }
+      return path;
+    }
+
+    function find_triangles_local_scaled() {
+      const found = [];
+      const edgesSet = new Set(con.map(e => `${e[0]}-${e[1]}`));
+      const n = pts.length;
+      for (let a = 0; a < n; a++) {
+        for (let b = a + 1; b < n; b++) {
+          if (!edgesSet.has(`${a}-${b}`)) continue;
+          for (let c = b + 1; c < n; c++) {
+            if (edgesSet.has(`${b}-${c}`) && edgesSet.has(`${a}-${c}`)) found.push([a, b, c]);
           }
         }
       }
-      sel=null; drag_pos=null;
+      return found;
     }
-  }
-});
 
-// keyboard for lobby input
-window.addEventListener('keydown', (ev)=>{
-  if (room_chosen === null && con.length===0 && tris.length===0 && input_active){
-    if (ev.key === 'Backspace'){
-      if (input_active === 'name') input_name = input_name.slice(0,-1);
-      else input_room = input_room.slice(0,-1);
-    } else if (ev.key === 'Enter') input_active = null;
-    else if (ev.key.length === 1){ if (input_active === 'name') input_name += ev.key; else input_room += ev.key; }
-  }
-});
-
-function canvasPos(ev){
-  const rect = canvas.getBoundingClientRect(); return { x: Math.round((ev.clientX-rect.left)*(canvas.width/rect.width)), y: Math.round((ev.clientY-rect.top)*(canvas.height/rect.height)) };
-}
-
-// --- Main loop ---
-let lastTick = performance.now();
-async function mainLoop(ts){
-  // handle any server messages
-  try{ await handle_server_messages(); }catch(e){}
-  // draw
-  if (room_chosen === null && con.length===0 && tris.length===0){ drawLobbyUI(); }
-  else {
-    drawFrame(sel, drag_pos);
-    if (game_over){
-      ctx.fillStyle = 'rgba(0,0,0,0.8)'; ctx.fillRect(0,0,WIDTH,HEIGHT);
-      ctx.font = BIG_FONT; ctx.fillStyle = '#fff';
-      const txt = `ПОБЕДИЛ ИГРОК ${winner+1}!`;
-      const w = ctx.measureText(txt).width; ctx.fillStyle = '#fff'; ctx.fillText(txt, WIDTH/2 - w/2, HEIGHT/2 - 32);
+    function tri_center_scaled(tri_pts) {
+      const xs = tri_pts.map(p => p[0]); const ys = tri_pts.map(p => p[1]);
+      return [Math.floor((xs[0] + xs[1] + xs[2]) / 3), Math.floor((ys[0] + ys[1] + ys[2]) / 3)];
     }
-  }
-  requestAnimationFrame(mainLoop);
-}
-requestAnimationFrame(mainLoop);
 
-function drawLobbyUI(){
-  ctx.fillStyle = '#1e1e24'; ctx.fillRect(0,0,WIDTH,HEIGHT);
-  ctx.font = '64px Arial'; ctx.fillStyle = '#fff'; const title = 'Lobby'; ctx.fillText(title, WIDTH/2 - ctx.measureText(title).width/2, 20);
-  // name box
-  ctx.fillStyle = '#32323c'; roundRect(ctx,50,120,300,40,6,true); ctx.strokeStyle = '#c8c8c8'; ctx.lineWidth=2; roundRect(ctx,50,120,300,40,6,false);
-  ctx.fillStyle = '#fff'; ctx.font = FONT; ctx.fillText('Name: ' + input_name, 60, 128);
-  // room box
-  ctx.fillStyle = '#32323c'; roundRect(ctx,50,180,300,40,6,true); ctx.strokeStyle = '#c8c8c8'; roundRect(ctx,50,180,300,40,6,false);
-  ctx.fillStyle = '#fff'; ctx.fillText('Room: ' + input_room, 60, 188);
-  // create/join buttons
-  ctx.fillStyle = '#4682b4'; roundRect(ctx,380,120,140,40,6,true); roundRect(ctx,380,180,140,40,6,true);
-  ctx.fillStyle = '#fff'; ctx.fillText('Create', 405,128); ctx.fillText('Join', 415,188);
-  // player list
-  ctx.fillStyle = '#fff'; ctx.fillText('Players in room:', 50,250);
-  let y = 290; ctx.font = FONT; for (const p of lobby_players){ const flag = p.isHost ? ' (host)' : ''; ctx.fillStyle = '#e6e6e6'; ctx.fillText(`${p.index+1}. ${p.name}${flag}`, 60, y); y += 30; }
-  if (is_host && room_chosen){ ctx.fillStyle = '#3cc078'; roundRect(ctx,800,120,140,40,6,true); ctx.fillStyle = '#000'; ctx.fillText('Start', 830,128); }
-}
-
-// --- Start: try connect (non-blocking) ---
-(async ()=>{ try{ await ws_client.connect(); }catch(e){ console.warn('initial ws connect failed',e); } })();
-
-// --- Self-contained PWA registration (service worker & manifest created from Blobs) ---
-if ('serviceWorker' in navigator){
-  const swScript = `self.addEventListener('install',e=>{self.skipWaiting();});self.addEventListener('activate',e=>{clients.claim();});self.addEventListener('fetch',e=>{if (e.request.url.endsWith('/ws')) return; e.respondWith(fetch(e.request));});`;
-  const swBlob = new Blob([swScript],{type:'application/javascript'});
-  const swUrl = URL.createObjectURL(swBlob);
-  navigator.serviceWorker.register(swUrl).then(()=>console.log('sw registered from blob')).catch(e=>console.warn('sw reg failed',e));
-  // manifest
-  const manifest = {
-  name: 'Hex Game',
-  short_name: 'HexGame',
-  start_url: 'https://testingapp-dot.github.io/chesspygame/',
-  display: 'standalone',
-  icons: [
-    {
-      src: 'https://testingapp-dot.github.io/chesspygame/favicon.png',   // здесь путь к файлу PNG
-      sizes: '512x512',      // размер иконки
-      type: 'image/png'      // MIME тип — обязательно 'image/png'
+    function end_if_needed_scaled() {
+      const active_players = [];
+      for (let i = 0; i < 4; i++) if (moves[i] > 0 && score[i] < 15) active_players.push(i);
+      if (active_players.length <= 1) { game_over = true; winner = score.indexOf(Math.max(...score)); return true; }
+      return false;
     }
-  ]
-};
 
-const manBlob = new Blob([JSON.stringify(manifest)], { type: 'application/json' });
-const manUrl = URL.createObjectURL(manBlob);
-const link = document.createElement('link');
-link.rel = 'manifest';
-link.href = manUrl;
-document.head.appendChild(link);
-}
+    function next_turn_local_scaled() {
+      for (let i = 0; i < 4; i++) { turn = (turn + 1) % 4; if (moves[turn] > 0 && score[turn] < 15) break; }
+    }
 
-// --- helpers / debug ---
-function logState(){ console.log({con, tris, score, moves, turn, room_chosen, player_index}); }
+    async function animateTriangleCentersScaled(new_tris_list) {
+      animating = true;
+      const temp = [];
+      for (const item of new_tris_list) {
+        temp.push([item.center, item.color]);
+        drawFrame(null, null, temp);
+        await new Promise(r => setTimeout(r, Math.max(80, tri_delay)));
+      }
+      animating = false;
+    }
 
-</script>
+    ///// WebSocket client
+    class WSClient {
+      constructor(url) { this.url = url; this.ws = null; this.queue = []; this.connected = false; }
+      connect() {
+        return new Promise((res, rej) => {
+          try {
+            this.ws = new WebSocket(this.url);
+            this.ws.addEventListener('open', () => { this.connected = true; console.log('WS open'); res(); });
+            this.ws.addEventListener('message', e => { try { const d = JSON.parse(e.data); this.queue.push(d); console.log('SERVER MSG:', d); } catch (err) { } });
+            this.ws.addEventListener('close', () => { this.connected = false; this.queue.push({ type: 'closed' }); console.log('WS closed'); });
+            this.ws.addEventListener('error', (err) => { console.error('WS error', err); });
+          } catch (e) { rej(e); }
+        });
+      }
+      send(obj) { if (this.ws && this.connected) this.ws.send(JSON.stringify(obj)); }
+      recv_nowait() { return this.queue.length ? this.queue.shift() : null; }
+    }
+    const ws_client = new WSClient(WS_URL);
+
+    function requestRoomsList() { if (ws_client.connected) ws_client.send({ type: 'list_rooms' }); }
+
+    // ---------- UPDATED: handle_server_messages sets playerNames ----------
+    async function handle_server_messages() {
+      const data = ws_client.recv_nowait(); if (!data) return;
+      const t = data.type;
+
+      if (t === 'created') {
+        room_chosen = data.room; player_index = data.playerIndex;
+        // server may include playerName
+        if (typeof data.playerName !== 'undefined') {
+          playerNames = playerNames.slice(); playerNames[player_index] = data.playerName;
+        }
+        console.log('created', room_chosen, player_index);
+      }
+      else if (t === 'joined') {
+        room_chosen = data.room; player_index = data.playerIndex;
+        if (typeof data.playerName !== 'undefined') {
+          playerNames = playerNames.slice(); playerNames[player_index] = data.playerName;
+        }
+        console.log('joined', room_chosen, player_index);
+      }
+      else if (t === 'lobby') {
+        lobby_players = data.players || [];
+        // build/merge playerNames from lobby list
+        const maxIdx = Math.max(4, ...(lobby_players.map(p => p.index)));
+        playerNames = Array(maxIdx + 1).fill(null);
+        for (const p of lobby_players) playerNames[p.index] = p.name;
+        const hostIndex = (typeof data.hostIndex !== 'undefined') ? data.hostIndex : 0;
+        is_host = (player_index === hostIndex);
+      }
+      else if (t === 'start') {
+        con = []; tris = [];
+        score = Array.isArray(data.score) ? data.score : score;
+        moves = Array.isArray(data.moves) ? data.moves : moves;
+        turn = (typeof data.turn !== 'undefined') ? data.turn : turn;
+        game_over = false; winner = null; waiting_for_server = false;
+        // prefer explicit playerNames array, or fallback to players array
+        if (Array.isArray(data.playerNames)) playerNames = data.playerNames.slice();
+        else if (Array.isArray(data.players)) {
+          playerNames = Array(Math.max(4, data.players.length)).fill(null);
+          for (const p of data.players) playerNames[p.index] = p.name;
+        }
+      }
+      else if (t === 'state_update') {
+        try { con = (data.con || []).map(pair => [pair[0], pair[1]]); } catch (e) { con = []; }
+        if (Array.isArray(data.tris)) {
+          tris = data.tris.map(tr => ({ points: tr.points.slice(), owner: tr.owner }));
+        } else {
+          const new_tris = data.new_tris || [];
+          for (const tr of new_tris) {
+            const pts_trip = tr.points.slice();
+            const owner = tr.owner;
+            if (!tris.find(t => arraysEqual(t.points.slice().sort(), pts_trip.slice().sort()))) {
+              tris.push({ points: pts_trip, owner });
+            }
+          }
+        }
+        score = Array.isArray(data.score) ? data.score : score;
+        moves = Array.isArray(data.moves) ? data.moves : moves;
+        turn = (typeof data.turn !== 'undefined') ? data.turn : turn;
+        game_over = (typeof data.game_over !== 'undefined') ? data.game_over : game_over;
+        winner = (typeof data.winner !== 'undefined') ? data.winner : winner;
+        waiting_for_server = false;
+        // update playerNames if server provided
+        if (Array.isArray(data.playerNames)) playerNames = data.playerNames.slice();
+        else if (Array.isArray(data.players)) {
+          playerNames = Array(Math.max(4, data.players.length)).fill(null);
+          for (const p of data.players) playerNames[p.index] = p.name;
+        }
+      }
+      else if (t === 'rooms_list') { servers = Array.isArray(data.rooms) ? data.rooms : []; }
+      else if (t === 'game_over') {
+        showWinnerOverlay = true;
+        winnerOverlayData = { winnerName: data.winnerName || null, emoji: data.emoji || '🏆' };
+        // if server didn't include winnerName, try to fill from playerNames[winner]
+        if (!winnerOverlayData.winnerName && typeof data.winner === 'number' && playerNames[data.winner]) {
+          winnerOverlayData.winnerName = playerNames[data.winner];
+        }
+        if (winnerOverlayTimeout) clearTimeout(winnerOverlayTimeout);
+        winnerOverlayTimeout = setTimeout(() => { showWinnerOverlay = false; winnerOverlayData = null; room_chosen = null; player_index = null; lobby_players = []; con = []; tris = []; score = [0, 0, 0, 0]; moves = [DEFAULT_MOVES, DEFAULT_MOVES, DEFAULT_MOVES, DEFAULT_MOVES]; requestRoomsList(); }, 3000);
+      }
+      else if (t === 'closed') { console.log('server closed connection'); }
+      else if (t === 'error') { console.warn('server error:', data.message); }
+    }
+
+    function arraysEqual(a, b) { if (a.length !== b.length) return false; for (let i = 0; i < a.length; i++) if (a[i] !== b[i]) return false; return true; }
+
+    ///// Pointer handling
+    let drag_pos = null;
+
+    function canvasPosFromEvent(clientX, clientY) {
+      const rect = canvas.getBoundingClientRect();
+      const DPR = window.devicePixelRatio || 1;
+      // convert to CSS coords that match drawing coordinates used elsewhere
+      const x = Math.round((clientX - rect.left));
+      const y = Math.round((clientY - rect.top));
+      return { x, y };
+    }
+
+    async function handlePointerDown(clientX, clientY) {
+      const pos = canvasPosFromEvent(clientX, clientY);
+      const mx = pos.x, my = pos.y;
+      // lobby hit handling...
+      if (room_chosen === null && con.length === 0 && tris.length === 0) {
+        const nameBox = sRect(50, 120, 300, 40);
+        if (mx >= nameBox.x && mx <= nameBox.x + nameBox.w && my >= nameBox.y && my <= nameBox.y + nameBox.h) { input_active = 'name'; drawImmediate(); return; }
+        const roomBox = sRect(50, 180, 300, 40);
+        if (mx >= roomBox.x && mx <= roomBox.x + roomBox.w && my >= roomBox.y && my <= roomBox.y + roomBox.h) { input_active = 'room'; drawImmediate(); return; }
+
+        const pcRegion = sRect(520, 120, 66 * 3 + 6 * 2, 36);
+        if (mx >= pcRegion.x && mx <= pcRegion.x + pcRegion.w && my >= pcRegion.y && my <= pcRegion.y + pcRegion.h) {
+          const relative = mx - pcRegion.x;
+          const idxBtn = Math.floor(relative / Math.round(66 * scale));
+          const mapping = [2, 3, 4];
+          selectedPlayerCount = mapping[Math.max(0, Math.min(2, idxBtn))];
+          drawImmediate(); return;
+        }
+
+        const createBtn = sRect(380, 120, 140, 40);
+        if (mx >= createBtn.x && mx <= createBtn.x + createBtn.w && my >= createBtn.y && my <= createBtn.y + createBtn.h) {
+          if (!ws_client.connected) { try { await ws_client.connect(); } catch (e) { console.error('connect failed', e); return; } }
+          ws_client.send({ type: 'create', room: input_room, name: input_name, playerCount: selectedPlayerCount });
+          return;
+        }
+
+        const joinBtn = sRect(380, 180, 140, 40);
+        if (mx >= joinBtn.x && mx <= joinBtn.x + joinBtn.w && my >= joinBtn.y && my <= joinBtn.y + joinBtn.h) {
+          if (!ws_client.connected) { try { await ws_client.connect(); } catch (e) { console.error('connect failed', e); return; } }
+          ws_client.send({ type: 'join', room: input_room, name: input_name });
+          return;
+        }
+
+        const startBtn = sRect(800, 120, 140, 40);
+        if (is_host && room_chosen && mx >= startBtn.x && mx <= startBtn.x + startBtn.w && my >= startBtn.y && my <= startBtn.y + startBtn.h) {
+          ws_client.send({ type: 'start', room: room_chosen });
+          return;
+        }
+
+        for (let i = 0; i < serversButtonRects.length; i++) {
+          const r = serversButtonRects[i];
+          if (mx >= r.x && mx <= r.x + r.w && my >= r.y && my <= r.y + r.h) {
+            const roomId = servers[i].id;
+            if (!ws_client.connected) { try { await ws_client.connect(); } catch (e) { console.error('connect failed', e); return; } }
+            ws_client.send({ type: 'join', room: roomId, name: input_name });
+            return;
+          }
+        }
+
+        return;
+      }
+
+      // gameplay
+      if (animating || waiting_for_server) return;
+      if (game_over) return;
+      if (score[turn] >= 15 || moves[turn] <= 0) { next_turn_local_scaled(); return; }
+      const i = nearScaled([mx, my]);
+      if (i !== null) {
+        if (sel === null) { sel = i; drag_pos = [mx, my]; drawImmediate(); return; }
+        else if (i !== sel) {
+          const path = line_ok_scaled(sel, i);
+          if (path.length === STEP_POINTS) {
+            let made_line = false;
+            for (let k = 0; k < path.length - 1; k++) { const a = path[k], b = path[k + 1]; const edge = sortedPair(a, b); if (!con.find(e => e[0] === edge[0] && e[1] === edge[1])) made_line = true; }
+            if (made_line) {
+              if (ws_client.connected && room_chosen !== null) { waiting_for_server = true; try { ws_client.send({ type: 'make_move', room: room_chosen, path: path }); } catch (err) { console.error('send move failed', err); waiting_for_server = false; } }
+              else {
+                for (let k = 0; k < path.length - 1; k++) { const a = path[k], b = path[k + 1]; const edge = sortedPair(a, b); if (!con.find(e => e[0] === edge[0] && e[1] === edge[1])) con.push(edge); }
+                const all_tris = find_triangles_local_scaled();
+                const existing_sets = new Set(tris.map(t => t.points.slice().sort((a, b) => a - b).join(',')));
+                const new_tris_raw = all_tris.filter(t => !existing_sets.has(t.slice().sort((a, b) => a - b).join(',')));
+                const new_tris = [];
+                for (const t of new_tris_raw) { const tri_pts = [pts[t[0]].pos, pts[t[1]].pos, pts[t[2]].pos]; const center = tri_center_scaled(tri_pts); new_tris.push({ points: t, center, color: PLAYERS_COLORS[turn] }); }
+                if (new_tris.length) { await animateTriangleCentersScaled(new_tris); for (const nt of new_tris) { tris.push({ points: nt.points, owner: turn }); score[turn]++; } }
+                moves[turn]--; if (!end_if_needed_scaled()) next_turn_local_scaled();
+              }
+            }
+          }
+          sel = null; drag_pos = null; drawImmediate();
+        }
+      }
+    }
+
+    function handlePointerMove(clientX, clientY) {
+      const pos = canvasPosFromEvent(clientX, clientY);
+      const mx = pos.x, my = pos.y;
+      if (sel !== null && !animating && !waiting_for_server) { drag_pos = [mx, my]; drawImmediate(); }
+    }
+
+    canvas.addEventListener('mousedown', (ev) => { handlePointerDown(ev.clientX, ev.clientY); });
+    canvas.addEventListener('mousemove', (ev) => { handlePointerMove(ev.clientX, ev.clientY); });
+
+    canvas.addEventListener('touchstart', (ev) => {
+      ev.preventDefault();
+      const t = ev.touches[0];
+      if (!t) return;
+      handlePointerDown(t.clientX, t.clientY);
+    });
+    canvas.addEventListener('touchmove', (ev) => {
+      ev.preventDefault();
+      const t = ev.touches[0];
+      if (!t) return;
+      handlePointerMove(t.clientX, t.clientY);
+    });
+    canvas.addEventListener('touchend', (ev) => {
+      // clear selection on touch end to avoid stuck selection
+      if (sel !== null) { sel = null; drag_pos = null; drawImmediate(); }
+    });
+
+    window.addEventListener('keydown', (ev) => {
+      if (room_chosen === null && con.length === 0 && tris.length === 0 && input_active) {
+        if (ev.key === 'Backspace') {
+          if (input_active === 'name') input_name = input_name.slice(0, -1);
+          else input_room = input_room.slice(0, -1);
+        } else if (ev.key === 'Enter') input_active = null;
+        else if (ev.key.length === 1) {
+          if (input_active === 'name') input_name += ev.key;
+          else input_room += ev.key;
+        }
+        drawImmediate();
+      }
+    });
+
+    function drawLobbyUI() {
+      ctx.fillStyle = '#1e1e24'; ctx.fillRect(0, 0, canvas.clientWidth, canvas.clientHeight);
+      ctx.font = `${Math.max(18, Math.round(36 * scale))}px Arial`; ctx.fillStyle = '#fff';
+      const title = 'Lobby';
+      const titleW = ctx.measureText(title).width;
+      ctx.fillText(title, (canvas.clientWidth - titleW) / 2, sy(20));
+
+      const nameBox = sRect(50, 120, 300, 40);
+      roundRectLocal(ctx, nameBox.x, nameBox.y, nameBox.w, nameBox.h, 6, true, '#32323c');
+      ctx.lineWidth = Math.max(1, Math.round(2 * scale)); ctx.strokeStyle = '#c8c8c8'; roundRectLocal(ctx, nameBox.x, nameBox.y, nameBox.w, nameBox.h, 6, false);
+      ctx.fillStyle = '#fff'; ctx.font = FONT; ctx.fillText('Name: ' + input_name, nameBox.x + sx(10), nameBox.y + sy(8));
+
+      const roomBox = sRect(50, 180, 300, 40);
+      roundRectLocal(ctx, roomBox.x, roomBox.y, roomBox.w, roomBox.h, 6, true, '#32323c'); roundRectLocal(ctx, roomBox.x, roomBox.y, roomBox.w, roomBox.h, 6, false);
+      ctx.fillStyle = '#fff'; ctx.fillText('Room: ' + input_room, roomBox.x + sx(10), roomBox.y + sy(8));
+
+      const counts = [2, 3, 4];
+      for (let i = 0; i < counts.length; i++) {
+        const x = sx(520) + i * Math.round((66 + 6) * scale);
+        const y = sy(120);
+        const wRect = Math.round(66 * scale), hRect = Math.round(36 * scale);
+        roundRectLocal(ctx, x, y, wRect, hRect, 6, true, (counts[i] === selectedPlayerCount) ? '#3cc078' : '#444');
+        ctx.fillStyle = (counts[i] === selectedPlayerCount) ? '#000' : '#fff';
+        ctx.font = FONT;
+        ctx.fillText(String(counts[i]), x + wRect / 2 - ctx.measureText(String(counts[i])).width / 2, y + Math.round(6 * scale));
+      }
+
+      const createBtn = sRect(380, 120, 140, 40);
+      const joinBtn = sRect(380, 180, 140, 40);
+      roundRectLocal(ctx, createBtn.x, createBtn.y, createBtn.w, createBtn.h, 6, true, '#4682b4');
+      roundRectLocal(ctx, joinBtn.x, joinBtn.y, joinBtn.w, joinBtn.h, 6, true, '#4682b4');
+      ctx.fillStyle = '#fff'; ctx.font = FONT; ctx.fillText('Create', createBtn.x + sx(25), createBtn.y + sy(8)); ctx.fillText('Join', joinBtn.x + sx(35), joinBtn.y + sy(8));
+
+      ctx.fillStyle = '#fff'; ctx.fillText('Players in room:', sx(50), sy(250));
+      let y = sy(290);
+      ctx.font = FONT;
+      for (const p of lobby_players) { const flag = p.isHost ? ' (host)' : ''; ctx.fillStyle = '#e6e6e6'; ctx.fillText(`${p.index + 1}. ${p.name}${flag}`, sx(60), y); y += sy(30); }
+
+      if (is_host && room_chosen) { roundRectLocal(ctx, sx(800), sy(120), sx(140), sy(40), 6, true, '#3cc078'); ctx.fillStyle = '#000'; ctx.fillText('Start', sx(830), sy(128)); }
+
+      ctx.fillStyle = '#fff'; ctx.fillText('Servers:', sx(520), sy(220));
+      serversButtonRects = [];
+      let syPos = sy(260);
+      ctx.font = `${Math.max(10, Math.round(14 * scale))}px Arial`;
+      for (let i = 0; i < servers.length; i++) {
+        const sRow = servers[i];
+        const rx = sx(520), rw = Math.round(440 * scale), rh = Math.round(40 * scale);
+        roundRectLocal(ctx, rx, syPos, rw, rh, 6, true, '#2a2a33');
+        ctx.fillStyle = '#fff';
+        const label = `${sRow.id} — players: ${sRow.players}/${sRow.maxPlayers} ${sRow.started ? '[started]' : ''}`;
+        ctx.fillText(label, rx + sx(10), syPos + Math.round(10 * scale));
+        const bx = rx + rw - Math.round(80 * scale), by = syPos + Math.round(6 * scale), bw = Math.round(70 * scale), bh = Math.round(28 * scale);
+        roundRectLocal(ctx, bx, by, bw, bh, 6, true, '#4682b4');
+        ctx.fillStyle = '#fff'; ctx.font = FONT; ctx.fillText('Join', bx + Math.round(18 * scale), by + Math.round(4 * scale));
+        serversButtonRects.push({ x: bx, y: by, w: bw, h: bh });
+        syPos += Math.round(54 * scale);
+        if (syPos > canvas.clientHeight - Math.round(80 * scale)) break;
+      }
+
+      ctx.font = FONT;
+    }
+
+    async function mainLoop() {
+      try { await handle_server_messages(); } catch (e) { }
+      if (room_chosen === null && con.length === 0 && tris.length === 0) {
+        drawLobbyUI();
+      } else {
+        drawFrame(sel, drag_pos);
+        // Оверлей победителя (с emoji и именем) теперь рисуется только в drawFrame()
+      }
+      requestAnimationFrame(mainLoop);
+    }
+    requestAnimationFrame(mainLoop);
+
+    (async () => { try { await ws_client.connect(); requestRoomsList(); } catch (e) { console.warn('initial ws connect failed', e); } })();
+    setInterval(() => { if (ws_client.connected && room_chosen === null) requestRoomsList(); }, 5000);
+
+    function logState() { console.log({ con, tris, score, moves, turn, room_chosen, player_index, servers, playerNames }); }
+
+  </script>
 </body>
+
 </html>
