@@ -67,6 +67,7 @@
   <script>
     /*
      Mobile-first Hex Game client (updated to show nicknames in player panels)
+     Added: on-screen custom keyboard (touch/click) for Name and Room editing
     */
 
     ///// CONFIG - keep these logical values but they will be scaled to screen
@@ -172,6 +173,10 @@
 
     // ---------- NEW: playerNames array (index -> nickname) ----------
     let playerNames = []; // will be populated from server messages (playerNames array or lobby players)
+
+    // ---------- NEW: on-screen keyboard state ----------
+    let keyboardRects = []; // [{x,y,w,h,key}]
+    const MAX_INPUT_LENGTH = 20;
 
     /* scaled helpers */
     function sx(x) { return Math.round(x * scale); }
@@ -485,11 +490,100 @@
       return { x, y };
     }
 
+    // ---------- NEW: draw on-screen keyboard ----------
+    function drawKeyboard() {
+      keyboardRects = [];
+      if (!input_active) return;
+
+      // Simple layout: 3 rows of letters + one control row (SPACE BACKSPACE ENTER)
+      const rows = ['QWERTYUIOP', 'ASDFGHJKL', 'ZXCVBNM'];
+      const margin = Math.max(8, sx(8));
+      const kbHeight = Math.min(Math.round(canvas.clientHeight * 0.32), sy(220));
+      const kbTop = canvas.clientHeight - kbHeight - margin;
+
+      // background
+      roundRectLocal(ctx, margin, kbTop, canvas.clientWidth - margin * 2, kbHeight, 12, true, '#1b1b1f');
+
+      // draw rows
+      const rowHeight = Math.round((kbHeight - margin * 3) / 4);
+      for (let r = 0; r < rows.length; r++) {
+        const row = rows[r];
+        const y = kbTop + margin + r * (rowHeight + margin / 2);
+        const keyW = Math.floor((canvas.clientWidth - margin * 4) / row.length) - 6;
+        for (let k = 0; k < row.length; k++) {
+          const key = row[k];
+          const x = margin * 2 + k * (keyW + 6);
+          const w = keyW; const h = rowHeight;
+          roundRectLocal(ctx, x, y, w, h, 6, true, '#2a2a33');
+          ctx.fillStyle = '#fff'; ctx.font = `${Math.max(12, Math.round(16 * scale))}px Arial`;
+          const tw = ctx.measureText(key).width;
+          ctx.fillText(key, x + (w - tw) / 2, y + Math.round((h - parseInt(ctx.font, 10)) / 2));
+          keyboardRects.push({ x: Math.round(x), y: Math.round(y), w: Math.round(w), h: Math.round(h), key });
+        }
+      }
+
+      // control row
+      const ctrlY = kbTop + margin + rows.length * (rowHeight + margin / 2);
+      const spaceW = Math.round((canvas.clientWidth - margin * 6) * 0.55);
+      const otherW = Math.round((canvas.clientWidth - margin * 6 - spaceW) / 2);
+      const spaceX = margin * 2;
+      // SPACE
+      roundRectLocal(ctx, spaceX, ctrlY, spaceW, rowHeight, 8, true, '#3c3c46');
+      ctx.fillStyle = '#fff'; ctx.font = `${Math.max(12, Math.round(16 * scale))}px Arial`;
+      const spaceLabel = 'SPACE';
+      ctx.fillText(spaceLabel, spaceX + (spaceW - ctx.measureText(spaceLabel).width) / 2, ctrlY + Math.round((rowHeight - parseInt(ctx.font, 10)) / 2));
+      keyboardRects.push({ x: Math.round(spaceX), y: Math.round(ctrlY), w: Math.round(spaceW), h: Math.round(rowHeight), key: ' ' });
+
+      // BACKSPACE
+      const backX = spaceX + spaceW + 6;
+      roundRectLocal(ctx, backX, ctrlY, otherW, rowHeight, 8, true, '#d9534f');
+      ctx.fillStyle = '#fff';
+      const backLabel = 'BACK';
+      ctx.fillText(backLabel, backX + (otherW - ctx.measureText(backLabel).width) / 2, ctrlY + Math.round((rowHeight - parseInt(ctx.font, 10)) / 2));
+      keyboardRects.push({ x: Math.round(backX), y: Math.round(ctrlY), w: Math.round(otherW), h: Math.round(rowHeight), key: 'BACK' });
+
+      // ENTER
+      const enterX = backX + otherW + 6;
+      roundRectLocal(ctx, enterX, ctrlY, otherW, rowHeight, 8, true, '#3cc078');
+      ctx.fillStyle = '#000';
+      const enterLabel = 'ENTER';
+      ctx.fillText(enterLabel, enterX + (otherW - ctx.measureText(enterLabel).width) / 2, ctrlY + Math.round((rowHeight - parseInt(ctx.font, 10)) / 2));
+      keyboardRects.push({ x: Math.round(enterX), y: Math.round(ctrlY), w: Math.round(otherW), h: Math.round(rowHeight), key: 'ENTER' });
+    }
+
+    function handleVirtualKey(key) {
+      if (!input_active) return;
+      if (key === 'BACK') {
+        if (input_active === 'name') input_name = input_name.slice(0, -1);
+        else input_room = input_room.slice(0, -1);
+      } else if (key === 'ENTER') {
+        input_active = null;
+      } else {
+        // character (space or letter)
+        if (input_active === 'name') {
+          if (input_name.length < MAX_INPUT_LENGTH) input_name += key;
+        } else {
+          if (input_room.length < MAX_INPUT_LENGTH) input_room += key;
+        }
+      }
+      drawImmediate();
+    }
+
     async function handlePointerDown(clientX, clientY) {
       const pos = canvasPosFromEvent(clientX, clientY);
       const mx = pos.x, my = pos.y;
       // lobby hit handling...
       if (room_chosen === null && con.length === 0 && tris.length === 0) {
+        // if keyboard visible - check keyboard hits first
+        if (input_active && keyboardRects.length) {
+          for (const r of keyboardRects) {
+            if (mx >= r.x && mx <= r.x + r.w && my >= r.y && my <= r.y + r.h) {
+              handleVirtualKey(r.key);
+              return;
+            }
+          }
+        }
+
         const nameBox = sRect(50, 120, 300, 40);
         if (mx >= nameBox.x && mx <= nameBox.x + nameBox.w && my >= nameBox.y && my <= nameBox.y + nameBox.h) { input_active = 'name'; drawImmediate(); return; }
         const roomBox = sRect(50, 180, 300, 40);
@@ -666,6 +760,9 @@
         syPos += Math.round(54 * scale);
         if (syPos > canvas.clientHeight - Math.round(80 * scale)) break;
       }
+
+      // draw keyboard if editing
+      if (input_active) drawKeyboard();
 
       ctx.font = FONT;
     }
