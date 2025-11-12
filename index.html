@@ -496,10 +496,10 @@
       if (!input_active) return;
 
       // Simple layout: 3 rows of letters + one control row (SPACE BACKSPACE ENTER)
-      const rows = ['QWERTYUIOP', 'ASDFGHJKL', 'ZXCVBNM'];
+      const rows = ['qwertyuiop', 'asdfghjkl', 'zxcvbnm'];
       const margin = Math.max(8, sx(8));
       const kbHeight = Math.min(Math.round(canvas.clientHeight * 0.32), sy(220));
-      const kbTop = canvas.clientHeight - kbHeight - margin;
+      const kbTop = canvas.clientHeight - kbHeight - margin - sy(20); // move up by 20 logical units
 
       // background
       roundRectLocal(ctx, margin, kbTop, canvas.clientWidth - margin * 2, kbHeight, 12, true, '#1b1b1f');
