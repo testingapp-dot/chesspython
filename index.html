@@ -724,7 +724,7 @@
             padding: 8px 0 12px;
         }
 
-        /* увеличиваем высоту канваса, чтобы гекса не обрезалась */
+        /* высокий канвас, чтобы верх/низ гекса не срезались */
         #gameCanvas {
             width: min(100vw - 24px, 900px);
             height: calc(min(100vw - 24px, 900px) * 1.15);
@@ -1611,7 +1611,7 @@
         const LOGICAL_BASE_W = 1000;
         const LOGICAL_BASE_H = 700;
         const BASE_SP = 96;
-        const BASE_DR = 14; // увеличили базовый радиус точки
+        const BASE_DR = 14; // базовый радиус точки
 
         const R = 4;
         const STEP_POINTS = 4;
@@ -1672,7 +1672,6 @@
 
             gctx.setTransform(DPR, 0, 0, DPR, 0, 0);
 
-            // чуть увеличили всё
             SP = Math.max(26, Math.round(BASE_SP * gScale));
             DR = Math.max(8, Math.round(BASE_DR * gScale));
             LINE_THICKNESS = Math.max(3, Math.round(5 * gScale));
@@ -1736,7 +1735,7 @@
         }
 
         function nearScaled(pos) {
-            // хитбокс завязан на DR и SP — удобно тыкать
+            // щедрый хитбокс — удобнее тапать
             const hitR = Math.max(DR * 2, Math.round(SP * 0.4));
             for (let i = 0; i < pts.length; i++) {
                 const p = pts[i].pos;
@@ -1809,6 +1808,27 @@
                 }
             }
             return found;
+        }
+
+        // Есть ли ещё вообще возможные новые ходы (новые рёбра)?
+        function hasAnyAvailableMove() {
+            const n = pts.length;
+            const existingEdges = new Set(con.map(e => `${e[0]}-${e[1]}`));
+            for (let a = 0; a < n; a++) {
+                for (let b = a + 1; b < n; b++) {
+                    const path = line_ok_scaled(a, b);
+                    if (path.length === STEP_POINTS) {
+                        for (let k = 0; k < path.length - 1; k++) {
+                            const e = sortedPair(path[k], path[k + 1]);
+                            const key = `${e[0]}-${e[1]}`;
+                            if (!existingEdges.has(key)) {
+                                return true;
+                            }
+                        }
+                    }
+                }
+            }
+            return false;
         }
 
         function tri_center_scaled(tri_pts) {
@@ -1895,15 +1915,13 @@
                 drawHexagonLocal(DOT, p.pos, DR + 3, true);
             }
 
+            // claimRects: ТОЛЬКО hitbox, без визуала (полностью прозрачные)
             claimRects = [];
             if (claimMode && claimCandidates.length > 0) {
                 for (const c of claimCandidates) {
                     const center = c.center;
-                    const outerR = Math.max(14, Math.round(16 * gScale));
-                    const innerR = Math.max(9, Math.round(11 * gScale));
-                    drawHexagonLocal('#22c55e', center, outerR, true);
-                    drawHexagonLocal('#bbf7d0', center, innerR, true);
                     const r = Math.round(28 * gScale);
+                    // ничего не рисуем, только прямоугольник для клика
                     claimRects.push({
                         x: center[0] - r,
                         y: center[1] - r,
@@ -2169,35 +2187,101 @@
             };
         }
 
+        // ==== НОВЫЕ ПРАВИЛА ЗАВЕРШЕНИЯ ИГРЫ В SINGLE PLAYER ====
         function checkLocalGameOver() {
             if (!isSinglePlayer || game_over) return;
 
+            const numPlayers = moves.length;
+            if (numPlayers < 2) return;
+
             const s0 = score[0] || 0;
             const s1 = score[1] || 0;
-            const noMoves = (moves[0] <= 0 && moves[1] <= 0);
-            const reachTarget = (s0 >= 15 || s1 >= 15);
+            const targetScore = 15;
 
-            if (!noMoves && !reachTarget) return;
+            // 2 игрока: игра заканчивается при достижении 15 очков
+            if (numPlayers === 2) {
+                // кто-то добрался до 15
+                if (s0 >= targetScore || s1 >= targetScore) {
+                    let winnerIndex = null;
+                    if (s0 > s1) winnerIndex = 0;
+                    else if (s1 > s0) winnerIndex = 1;
+                    else winnerIndex = null;
 
-            let winnerIndex = null;
-            if (s0 > s1) winnerIndex = 0;
-            else if (s1 > s0) winnerIndex = 1;
-            else winnerIndex = null;
+                    game_over = true;
 
-            game_over = true;
+                    if (winnerIndex === null) {
+                        showWinnerOverlay('Ничья', '🤝', null);
+                        updateGameHUD();
+                        drawImmediate();
+                    } else {
+                        const data = {
+                            winner: winnerIndex,
+                            winnerName: playerNames[winnerIndex],
+                            winnerAvatar: winnerIndex === 0 ? (localAvatarDataUrl || null) : null,
+                            emoji: winnerIndex === 0 ? '🏆' : '🤖'
+                        };
+                        handleGameOver(data);
+                    }
+                    return;
+                }
 
-            if (winnerIndex === null) {
-                showWinnerOverlay('Ничья', '🤝', null);
-                updateGameHUD();
-                drawImmediate();
-            } else {
-                const data = {
-                    winner: winnerIndex,
-                    winnerName: playerNames[winnerIndex],
-                    winnerAvatar: winnerIndex === 0 ? (localAvatarDataUrl || null) : null,
-                    emoji: winnerIndex === 0 ? '🏆' : '🤖'
-                };
-                handleGameOver(data);
+                // если ходов нет и/или доска забита — побеждает тот, у кого больше очков
+                const noMovesLeft = (moves[0] <= 0 && moves[1] <= 0);
+                const noPossibleMoves = !hasAnyAvailableMove();
+
+                if (!noMovesLeft && !noPossibleMoves) return;
+
+                let winnerIndex = null;
+                if (s0 > s1) winnerIndex = 0;
+                else if (s1 > s0) winnerIndex = 1;
+                else winnerIndex = null;
+
+                game_over = true;
+
+                if (winnerIndex === null) {
+                    showWinnerOverlay('Ничья', '🤝', null);
+                    updateGameHUD();
+                    drawImmediate();
+                } else {
+                    const data = {
+                        winner: winnerIndex,
+                        winnerName: playerNames[winnerIndex],
+                        winnerAvatar: winnerIndex === 0 ? (localAvatarDataUrl || null) : null,
+                        emoji: winnerIndex === 0 ? '🏆' : '🤖'
+                    };
+                    handleGameOver(data);
+                }
+                return;
+            }
+
+            // на будущее: 3-4 игрока в локальном режиме -> победитель после заполнения доски
+            if (!hasAnyAvailableMove()) {
+                let bestScore = -Infinity;
+                let best = [];
+                for (let i = 0; i < numPlayers; i++) {
+                    const s = score[i] || 0;
+                    if (s > bestScore) {
+                        bestScore = s;
+                        best = [i];
+                    } else if (s === bestScore) {
+                        best.push(i);
+                    }
+                }
+                game_over = true;
+                if (best.length !== 1) {
+                    showWinnerOverlay('Ничья', '🤝', null);
+                    updateGameHUD();
+                    drawImmediate();
+                } else {
+                    const w = best[0];
+                    const data = {
+                        winner: w,
+                        winnerName: playerNames[w],
+                        winnerAvatar: w === 0 ? (localAvatarDataUrl || null) : null,
+                        emoji: '🏆'
+                    };
+                    handleGameOver(data);
+                }
             }
         }
 
@@ -2380,6 +2464,7 @@
             drag_pos = null;
 
             if (claimMode) {
+                // выбор треугольников идёт через pointerup по claimRects
                 sel = null;
                 return;
             }
@@ -2388,7 +2473,7 @@
                 return;
             }
 
-            if ((score[turn] >= 15) || (moves[turn] <= 0)) {
+            if ((score[turn] >= 15 && isSinglePlayer && moves.length === 2) || (moves[turn] <= 0)) {
                 return;
             }
 
@@ -2453,7 +2538,7 @@
                 return;
             }
 
-            if ((score[turn] >= 15) || (moves[turn] <= 0)) {
+            if ((score[turn] >= 15 && isSinglePlayer && moves.length === 2) || (moves[turn] <= 0)) {
                 sel = null;
                 drag_pos = null;
                 drawImmediate();
@@ -2526,22 +2611,23 @@
             endTurnBtn.addEventListener('click', () => {
                 if (!gameStarted || game_over) return;
 
+                // ЛОКАЛЬНЫЙ / SINGLE PLAYER: больше НЕ автоклеймим все треугольники
                 if (!currentRoomId || !wsConnected || isSinglePlayer) {
-                    if (claimMode && claimCandidates.length > 0) {
-                        const triangles = claimCandidates.map(c => c.points);
-                        localAcceptClaims(triangles);
-                    } else {
-                        claimMode = false;
-                        turn = (turn + 1) % moves.length;
-                        updateGameHUD();
-                        drawImmediate();
-                        if (isSinglePlayer && !game_over && turn === 1) {
+                    // просто заканчиваем фазу claim (если была) и передаём ход
+                    claimMode = false;
+                    turn = (turn + 1) % moves.length;
+                    updateGameHUD();
+                    drawImmediate();
+                    if (isSinglePlayer) {
+                        checkLocalGameOver();
+                        if (!game_over && turn === 1) {
                             scheduleBotMove();
                         }
                     }
                     return;
                 }
 
+                // онлайн-игра
                 waiting_for_server = true;
                 sendWS({ type: 'end_turn', room: currentRoomId });
                 claimMode = false;
