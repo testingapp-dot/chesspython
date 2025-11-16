@@ -61,8 +61,6 @@
             gap: 10px;
         }
 
-        .pill-btn,
-        .coin-pill,
         .profile-pill,
         .howto-pill {
             border-radius: 999px;
@@ -74,34 +72,6 @@
             justify-content: center;
         }
 
-        .pill-btn {
-            width: 42px;
-            height: 42px;
-            font-size: 20px;
-            cursor: pointer;
-        }
-
-        .coin-pill {
-            padding: 6px 12px;
-            gap: 6px;
-            font-weight: 700;
-            font-size: 14px;
-            background: linear-gradient(145deg, #20141a, #3a2832);
-        }
-
-        .coin-icon {
-            width: 24px;
-            height: 24px;
-            border-radius: 999px;
-            background: radial-gradient(circle at 30% 30%, #ffeaa0, #ffb635);
-            box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.45);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 14px;
-            color: #4b2b05;
-        }
-
         .profile-pill {
             flex: 1;
             padding: 4px 10px;
@@ -111,12 +81,16 @@
             display: flex;
             align-items: center;
             justify-content: flex-start;
-            transition: all 180ms ease-out;
+            transition: background 180ms ease-out;
+            min-height: 42px;
+            overflow: hidden;
         }
 
-        .profile-pill.open {
-            flex-direction: column;
-            align-items: stretch;
+        .profile-main {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            width: 100%;
         }
 
         .profile-avatar {
@@ -127,6 +101,9 @@
             position: relative;
             box-shadow: 0 6px 14px rgba(0, 0, 0, 0.5);
             flex-shrink: 0;
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
         }
 
         .profile-avatar::after {
@@ -151,10 +128,14 @@
 
         .profile-extra {
             display: none;
-            flex-direction: column;
-            gap: 6px;
-            margin-top: 6px;
+            align-items: center;
+            gap: 8px;
             width: 100%;
+            justify-content: space-between;
+        }
+
+        .profile-pill.open .profile-main {
+            display: none;
         }
 
         .profile-pill.open .profile-extra {
@@ -172,7 +153,6 @@
             font-size: 12px;
             font-weight: 600;
             cursor: pointer;
-            align-self: flex-start;
         }
 
         .upload-btn span {
@@ -314,6 +294,7 @@
 
         .mode-pass {
             background: radial-gradient(circle at 10% 0%, #ffb267 0, #ff583c 45%, #31101a 100%);
+            cursor: pointer;
         }
 
         .mode-pass .mode-header {
@@ -335,6 +316,7 @@
 
         .mode-single {
             background: radial-gradient(circle at 10% 0%, #8effb2 0, #20b56a 40%, #051b14 100%);
+            cursor: pointer;
         }
 
         .mode-single .mode-header {
@@ -665,6 +647,13 @@
             gap: 12px;
         }
 
+        .game-header {
+            display: flex;
+            justify-content: flex-start;
+            align-items: center;
+            margin-bottom: 4px;
+        }
+
         .game-top-bar {
             display: flex;
             justify-content: space-between;
@@ -735,42 +724,21 @@
             padding: 8px 0 12px;
         }
 
-        .hex-board {
-            width: min(92vw, 520px);
-            aspect-ratio: 1;
-            position: relative;
-        }
-
-        .hex-board::before {
-            content: '';
-            position: absolute;
-            inset: 0;
-            background:
-                radial-gradient(circle at 30% 10%, rgba(148, 163, 184, 0.3), transparent 55%),
-                radial-gradient(circle at 80% 90%, rgba(56, 189, 248, 0.25), transparent 55%),
-                linear-gradient(180deg, #020617, #020617);
-            clip-path: polygon(25% 3%, 75% 3%, 97% 50%, 75% 97%, 25% 97%, 3% 50%);
-            box-shadow:
-                0 30px 55px rgba(0, 0, 0, 0.95),
-                0 0 0 4px rgba(15, 23, 42, 0.95);
-        }
-
-        .hex-inner {
-            position: absolute;
-            inset: 7%;
-            clip-path: polygon(25% 3%, 75% 3%, 97% 50%, 75% 97%, 25% 97%, 3% 50%);
-            background:
-                radial-gradient(circle at 20% 15%, rgba(148, 163, 184, 0.16), transparent 45%),
-                radial-gradient(circle at 80% 80%, rgba(59, 130, 246, 0.2), transparent 55%),
-                #020617;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
+        /* Новый простой большой борт вместо hex-рамки */
 
         #gameCanvas {
-            width: 100%;
-            height: 100%;
+            width: min(100vw - 24px, 900px);
+            height: min(100vh - 220px, 900px);
+            max-width: 900px;
+            max-height: 900px;
+            border-radius: 24px;
+            background:
+                radial-gradient(circle at 20% 15%, rgba(148, 163, 184, 0.18), transparent 50%),
+                radial-gradient(circle at 80% 85%, rgba(59, 130, 246, 0.25), transparent 60%),
+                #020617;
+            box-shadow:
+                0 30px 60px rgba(0, 0, 0, 0.95),
+                0 0 0 4px rgba(15, 23, 42, 0.95);
             display: block;
         }
 
@@ -876,6 +844,11 @@
             .right {
                 width: 100%
             }
+
+            #gameCanvas {
+                width: calc(100vw - 24px);
+                height: calc(100vh - 220px);
+            }
         }
     </style>
 </head>
@@ -885,15 +858,9 @@
     <!-- ===================== MAIN MENU ===================== -->
     <div id="mainMenu" class="main-menu">
         <div class="top-bar">
-            <button class="pill-btn" aria-label="Settings">⚙</button>
-
-            <div class="coin-pill">
-                <div class="coin-icon">¤</div>
-                <span>3400</span>
-            </div>
-
+            <!-- убраны settings и coin -->
             <div class="profile-pill" id="profilePill">
-                <div class="profile-main" style="display:flex;align-items:center;gap:8px;width:100%;">
+                <div class="profile-main">
                     <div class="profile-avatar" id="profileAvatar"></div>
                     <div class="profile-meta">
                         <div class="profile-name">Player</div>
@@ -944,7 +911,7 @@
                 </div>
             </div>
 
-            <div class="mode-card mode-single">
+            <div class="mode-card mode-single" id="singlePanel">
                 <div class="mode-header">Single Player</div>
                 <div class="mode-body">
                     <div class="mode-title">SINGLE</div>
@@ -963,7 +930,7 @@
                 </div>
             </div>
 
-            <div id="subPanel" class="mode-card mode-pass" style="cursor:pointer;">
+            <div id="subPanel" class="mode-card mode-pass">
                 <div class="mode-header">Subscription</div>
                 <div class="mode-body">
                     <div class="mode-title" style="font-size:20px;">BUY SUBSCRIPTION</div>
@@ -1056,14 +1023,15 @@
 
     <!-- ===================== GAME SCREEN ===================== -->
     <div id="gameScreen">
+        <div class="game-header">
+            <button id="gameExitBtn" class="small-btn">← Выйти</button>
+        </div>
+
         <div class="game-top-bar" id="gameTopPlayers"></div>
 
         <div class="game-board-wrap">
-            <div class="hex-board">
-                <div class="hex-inner">
-                    <canvas id="gameCanvas"></canvas>
-                </div>
-            </div>
+            <!-- Убрана старая hex-рамка, просто большой canvas -->
+            <canvas id="gameCanvas"></canvas>
         </div>
 
         <div class="game-bottom-bar">
@@ -1108,6 +1076,7 @@
         const gameScreen = document.getElementById('gameScreen');
         const playPanel = document.getElementById('playPanel');
         const subPanel = document.getElementById('subPanel');
+        const singlePanel = document.getElementById('singlePanel');
 
         playPanel.addEventListener('click', () => {
             mainMenu.style.display = 'none';
@@ -1115,6 +1084,7 @@
             gameScreen.style.display = 'none';
             connectWS();
             requestRoomsList();
+            startRoomsAutoRefresh();
             window.scrollTo(0, 0);
         });
 
@@ -1123,11 +1093,16 @@
             lobbyWrap.style.display = 'none';
             gameScreen.style.display = 'none';
             mainMenu.style.display = 'flex';
+            stopRoomsAutoRefresh();
             window.scrollTo(0, 0);
         });
 
         subPanel.addEventListener('click', () => {
             alert('Open subscription purchase flow');
+        });
+
+        singlePanel.addEventListener('click', () => {
+            startSinglePlayerGame();
         });
 
         // Lobby elements
@@ -1210,6 +1185,8 @@
         /* ===== WebSocket client ===== */
         let ws = null;
         let wsConnected = false;
+        let roomsRefreshInterval = null;
+        let isSinglePlayer = false;
 
         let currentRoomId = null;
         let currentPlayerIndex = null;
@@ -1222,6 +1199,7 @@
         let roomsList = [];
 
         function connectWS() {
+            if (isSinglePlayer) return; // при сингле не коннектимся к серверу
             if (ws && (ws.readyState === WebSocket.OPEN || ws.readyState === WebSocket.CONNECTING)) return;
             ws = new WebSocket(WS_URL);
 
@@ -1251,6 +1229,7 @@
                         isHost = true;
                         roomMinPlayers = data.minPlayers || 2;
                         roomMaxPlayers = data.maxPlayers || roomMaxPlayers;
+                        requestRoomsList(); // обновим список сразу после создания
                         break;
 
                     case 'joined':
@@ -1297,7 +1276,6 @@
                             // при нормальном конце игры:
                             // просто чистим состояние, а возврат в меню делает winner-overlay по таймеру
                             resetRoomClientState();
-                            // showMainMenu() тут не вызываем — его вызовет оверлей после отсчёта
                         }
 
                         break;
@@ -1314,15 +1292,33 @@
             const str = JSON.stringify(obj);
             if (ws && ws.readyState === WebSocket.OPEN) {
                 ws.send(str);
-            } else {
+            } else if (!isSinglePlayer) {
                 connectWS();
                 ws.addEventListener('open', () => ws.send(str), { once: true });
             }
         }
 
         function requestRoomsList() {
+            if (isSinglePlayer) return;
             if (!wsConnected && (!ws || ws.readyState !== WebSocket.CONNECTING)) connectWS();
             sendWS({ type: 'list_rooms' });
+        }
+
+        function startRoomsAutoRefresh() {
+            if (isSinglePlayer) return;
+            if (roomsRefreshInterval) clearInterval(roomsRefreshInterval);
+            roomsRefreshInterval = setInterval(() => {
+                if (lobbyWrap.style.display !== 'none') {
+                    requestRoomsList();
+                }
+            }, 10000);
+        }
+
+        function stopRoomsAutoRefresh() {
+            if (roomsRefreshInterval) {
+                clearInterval(roomsRefreshInterval);
+                roomsRefreshInterval = null;
+            }
         }
 
         function resetRoomClientState() {
@@ -1332,14 +1328,19 @@
             roomsList = [];
             isHost = false;
             hostIndex = null;
+            roomMinPlayers = 2;
+            roomMaxPlayers = 4;
             renderPlayers();
             renderServers();
+            stopRoomsAutoRefresh();
+            isSinglePlayer = false;
         }
 
         function showMainMenu() {
             gameScreen.style.display = 'none';
             lobbyWrap.style.display = 'none';
             mainMenu.style.display = 'flex';
+            stopRoomsAutoRefresh();
         }
 
         /* ===== Lobby rendering ===== */
@@ -1450,6 +1451,7 @@
                 maxPlayers: roomMaxPlayers,
                 avatar: localAvatarDataUrl || null
             });
+            requestRoomsList();
         });
 
         startBtn.addEventListener('click', () => {
@@ -1463,7 +1465,7 @@
         });
 
         leaveBtn.addEventListener('click', () => {
-            if (ws) {
+            if (ws && ws.readyState === WebSocket.OPEN) {
                 ws.close(); // сервер сам удалит из комнаты
             }
             resetRoomClientState();
@@ -1591,11 +1593,12 @@
             } catch (e) { console.error(e); }
         })();
 
-        /* ===== Game UI + Hex Board (canvas) ===== */
+        /* ===== Game UI + Board (canvas) ===== */
         const gameTopPlayers = document.getElementById('gameTopPlayers');
         const gameBottomPlayer = document.getElementById('gameBottomPlayer');
         const gameCanvas = document.getElementById('gameCanvas');
         const endTurnBtn = document.getElementById('endTurnBtn');
+        const gameExitBtn = document.getElementById('gameExitBtn');
         const gctx = gameCanvas.getContext('2d', { alpha: false });
 
         // winner overlay
@@ -1657,11 +1660,13 @@
         let tri_delay = 220;
         let gameStarted = false;
 
+        let pointerIsDown = false;
+
         function setupCanvasSize() {
             const DPR = window.devicePixelRatio || 1;
             const rect = gameCanvas.getBoundingClientRect();
             const cssW = rect.width || window.innerWidth;
-            const cssH = rect.height || (window.innerHeight * 0.6);
+            const cssH = rect.height || (window.innerHeight * 0.7);
 
             gameCanvas.style.width = cssW + 'px';
             gameCanvas.style.height = cssH + 'px';
@@ -1967,7 +1972,6 @@
                 const mv = moves[p.index] || 0;
                 const card = document.createElement('div');
                 card.className = 'game-player-card';
-                if (turn === p.index && !game_over) card.classList.add('color-blue');
                 card.innerHTML = `
         <div class="avatar-circle"></div>
         <div class="game-player-meta">
@@ -1988,12 +1992,15 @@
             mainMenu.style.display = 'none';
             lobbyWrap.style.display = 'none';
             gameScreen.style.display = 'flex';
+            stopRoomsAutoRefresh();
             window.scrollTo(0, 0);
             setupCanvasSize();
             drawImmediate();
         }
 
         function handleGameStart(data) {
+            isSinglePlayer = false;
+
             con = [];
             tris = [];
 
@@ -2161,6 +2168,38 @@
             };
         }
 
+        function checkLocalGameOver() {
+            if (!isSinglePlayer || game_over) return;
+
+            const s0 = score[0] || 0;
+            const s1 = score[1] || 0;
+            const noMoves = (moves[0] <= 0 && moves[1] <= 0);
+            const reachTarget = (s0 >= 15 || s1 >= 15);
+
+            if (!noMoves && !reachTarget) return;
+
+            let winnerIndex = null;
+            if (s0 > s1) winnerIndex = 0;
+            else if (s1 > s0) winnerIndex = 1;
+            else winnerIndex = null;
+
+            game_over = true;
+
+            if (winnerIndex === null) {
+                showWinnerOverlay('Ничья', '🤝', null);
+                updateGameHUD();
+                drawImmediate();
+            } else {
+                const data = {
+                    winner: winnerIndex,
+                    winnerName: playerNames[winnerIndex],
+                    winnerAvatar: winnerIndex === 0 ? (localAvatarDataUrl || null) : null,
+                    emoji: winnerIndex === 0 ? '🏆' : '🤖'
+                };
+                handleGameOver(data);
+            }
+        }
+
         function localAcceptClaims(triangles) {
             const edgesSet = new Set(con.map(e => `${e[0]}-${e[1]}`));
             const existing = new Set(tris.map(t => triKeyFromPoints(t.points)));
@@ -2177,7 +2216,7 @@
                     accepted.push(tri.slice());
                 }
             }
-            if (accepted.length) score[turn] += accepted.length;
+            if (accepted.length) score[turn] = (score[turn] || 0) + accepted.length;
 
             updateClaimCandidates();
 
@@ -2194,123 +2233,290 @@
             }
             updateGameHUD();
             drawImmediate();
+
+            if (isSinglePlayer) {
+                checkLocalGameOver();
+                if (!game_over && turn === 1) {
+                    scheduleBotMove();
+                }
+            }
         }
 
-        function handleCanvasDown(clientX, clientY) {
+        function applyLocalMoveFromPath(path, options = {}) {
+            const { autoClaim = false } = options;
+
+            if (!Array.isArray(path) || path.length < 2) return false;
+
+            const newEdges = [];
+            for (let k = 0; k < path.length - 1; k++) {
+                const a = path[k], b = path[k + 1];
+                const edge = sortedPair(a, b);
+                if (!con.find(e => e[0] === edge[0] && e[1] === edge[1])) {
+                    con.push(edge);
+                    newEdges.push(edge);
+                }
+            }
+
+            if (!newEdges.length) {
+                return false;
+            }
+
+            if (typeof moves[turn] !== 'number') moves[turn] = DEFAULT_MOVES;
+            moves[turn] = Math.max(0, (moves[turn] || 0) - 1);
+
+            updateClaimCandidates();
+
+            if (claimCandidates.length === 0) {
+                claimMode = false;
+                turn = (turn + 1) % moves.length;
+                updateGameHUD();
+                drawImmediate();
+                if (isSinglePlayer) {
+                    checkLocalGameOver();
+                    if (!game_over && turn === 1) {
+                        scheduleBotMove();
+                    }
+                }
+            } else {
+                if (autoClaim) {
+                    const triangles = claimCandidates.map(c => c.points);
+                    localAcceptClaims(triangles);
+                } else {
+                    claimMode = true;
+                    updateGameHUD();
+                    drawImmediate();
+                }
+            }
+
+            return true;
+        }
+
+        function scheduleBotMove() {
+            if (!isSinglePlayer) return;
+            const botIndex = 1;
+            if (game_over || !gameStarted) return;
+            if (turn !== botIndex) return;
+
+            setTimeout(() => {
+                if (!isSinglePlayer || game_over || !gameStarted || turn !== botIndex) return;
+                botMakeMove();
+            }, 400);
+        }
+
+        function botMakeMove() {
+            if (!isSinglePlayer || game_over || !gameStarted) return;
+
+            const botIndex = 1;
+            if (turn !== botIndex) return;
+
+            const n = pts.length;
+            const existingEdges = new Set(con.map(e => `${e[0]}-${e[1]}`));
+            const candidatePaths = [];
+
+            for (let a = 0; a < n; a++) {
+                for (let b = a + 1; b < n; b++) {
+                    const path = line_ok_scaled(a, b);
+                    if (path.length === STEP_POINTS) {
+                        const newEdges = [];
+                        let hasNew = false;
+                        for (let k = 0; k < path.length - 1; k++) {
+                            const e = sortedPair(path[k], path[k + 1]);
+                            const key = `${e[0]}-${e[1]}`;
+                            if (!existingEdges.has(key)) {
+                                hasNew = true;
+                                newEdges.push(e);
+                            }
+                        }
+                        if (hasNew) {
+                            candidatePaths.push({ path, newEdges });
+                        }
+                    }
+                }
+            }
+
+            if (!candidatePaths.length) {
+                moves[botIndex] = 0;
+                turn = 0;
+                updateGameHUD();
+                drawImmediate();
+                checkLocalGameOver();
+                return;
+            }
+
+            let best = [];
+            let bestScore = -1;
+
+            for (const cand of candidatePaths) {
+                const hypotheticalEdges = con.concat(cand.newEdges);
+                const raw = find_triangles_from_edges(hypotheticalEdges);
+                const existingTriKeys = new Set(tris.map(t => triKeyFromPoints(t.points)));
+                let newCount = 0;
+                for (const t of raw) {
+                    const key = triKeyFromPoints(t);
+                    if (!existingTriKeys.has(key)) newCount++;
+                }
+                if (newCount > bestScore) {
+                    bestScore = newCount;
+                    best = [cand];
+                } else if (newCount === bestScore) {
+                    best.push(cand);
+                }
+            }
+
+            const choice = best[Math.floor(Math.random() * best.length)];
+            applyLocalMoveFromPath(choice.path, { autoClaim: true });
+        }
+
+        function handlePointerDown(ev) {
+            ev.preventDefault();
+
             if (!gameStarted || animating || waiting_for_server || game_over) return;
 
-            const pos = canvasPosFromEvent(clientX, clientY);
+            const pos = canvasPosFromEvent(ev.clientX, ev.clientY);
             const mx = pos.x, my = pos.y;
+
+            pointerIsDown = true;
+            drag_pos = null;
+
+            if (claimMode) {
+                // выбор треугольника будет на pointerup
+                sel = null;
+                return;
+            }
+
+            if (currentRoomId && wsConnected && !isSinglePlayer && currentPlayerIndex !== turn) {
+                return;
+            }
+
+            if ((score[turn] >= 15) || (moves[turn] <= 0)) {
+                return;
+            }
+
+            const i = nearScaled([mx, my]);
+            if (i !== null) {
+                sel = i;
+                drag_pos = [mx, my];
+                drawImmediate();
+            } else {
+                sel = null;
+                drag_pos = null;
+            }
+        }
+
+        function handlePointerMove(ev) {
+            if (!pointerIsDown || sel === null || !gameStarted || animating || waiting_for_server || game_over) return;
+            const pos = canvasPosFromEvent(ev.clientX, ev.clientY);
+            drag_pos = [pos.x, pos.y];
+            drawImmediate();
+        }
+
+        function handlePointerUp(ev) {
+            if (!pointerIsDown) return;
+            ev.preventDefault();
+            const pos = canvasPosFromEvent(ev.clientX, ev.clientY);
+            const mx = pos.x, my = pos.y;
+
+            pointerIsDown = false;
+
+            if (!gameStarted || animating || waiting_for_server || game_over) {
+                sel = null;
+                drag_pos = null;
+                drawImmediate();
+                return;
+            }
 
             if (claimMode) {
                 for (const r of claimRects) {
                     if (mx >= r.x && mx <= r.x + r.w && my >= r.y && my <= r.y + r.h) {
                         const triangles = [r.tri.slice()];
-                        if (wsConnected && currentRoomId) {
+                        if (currentRoomId && wsConnected && !isSinglePlayer) {
                             waiting_for_server = true;
                             sendWS({ type: 'claim_triangles', room: currentRoomId, triangles });
                         } else {
                             localAcceptClaims(triangles);
                         }
+                        sel = null;
+                        drag_pos = null;
                         return;
                     }
                 }
+                sel = null;
+                drag_pos = null;
+                drawImmediate();
                 return;
             }
 
-            if (wsConnected && currentRoomId && currentPlayerIndex !== turn) {
+            if (currentRoomId && wsConnected && !isSinglePlayer && currentPlayerIndex !== turn) {
+                sel = null;
+                drag_pos = null;
+                drawImmediate();
                 return;
             }
 
-            if (score[turn] >= 15 || moves[turn] <= 0) return;
+            if ((score[turn] >= 15) || (moves[turn] <= 0)) {
+                sel = null;
+                drag_pos = null;
+                drawImmediate();
+                return;
+            }
 
-            const i = nearScaled([mx, my]);
-            if (i !== null) {
-                if (sel === null) {
-                    sel = i;
-                    drag_pos = [mx, my];
-                    drawImmediate();
-                    return;
-                } else if (i !== sel) {
-                    const path = line_ok_scaled(sel, i);
-                    if (path.length === STEP_POINTS) {
-                        let made_line = false;
-                        const newEdges = [];
-                        for (let k = 0; k < path.length - 1; k++) {
-                            const a = path[k], b = path[k + 1];
-                            const edge = sortedPair(a, b);
-                            if (!con.find(e => e[0] === edge[0] && e[1] === edge[1])) {
-                                made_line = true;
-                                newEdges.push(edge);
-                            }
-                        }
-                        if (made_line) {
-                            if (wsConnected && currentRoomId) {
-                                waiting_for_server = true;
-                                for (const e of newEdges) con.push(e);
+            const startIndex = sel;
+            const endIndex = nearScaled([mx, my]);
 
-                                const hypotheticalEdges = con.slice();
-                                const raw = find_triangles_from_edges(hypotheticalEdges);
-                                const existing = new Set(tris.map(t => triKeyFromPoints(t.points)));
-                                const newCandidates = raw.filter(t => !existing.has(triKeyFromPoints(t)));
-
-                                sendWS({ type: 'make_move', room: currentRoomId, path });
-
-                                if (newCandidates.length === 0) {
-                                    sendWS({ type: 'end_turn', room: currentRoomId });
-                                    claimMode = false;
-                                } else {
-                                    claimMode = true;
-                                    updateClaimCandidates();
-                                }
-                            } else {
-                                for (const e of newEdges) con.push(e);
-                                updateClaimCandidates();
-                                if (claimCandidates.length === 0) {
-                                    turn = (turn + 1) % moves.length;
-                                } else {
-                                    claimMode = true;
-                                }
-                            }
+            if (startIndex != null && endIndex != null && endIndex !== startIndex) {
+                const path = line_ok_scaled(startIndex, endIndex);
+                if (path.length === STEP_POINTS) {
+                    const newEdges = [];
+                    for (let k = 0; k < path.length - 1; k++) {
+                        const a = path[k], b = path[k + 1];
+                        const edge = sortedPair(a, b);
+                        if (!con.find(e => e[0] === edge[0] && e[1] === edge[1])) {
+                            newEdges.push(edge);
                         }
                     }
-                    sel = null;
-                    drag_pos = null;
-                    updateGameHUD();
-                    drawImmediate();
+
+                    if (newEdges.length > 0) {
+                        if (currentRoomId && wsConnected && !isSinglePlayer) {
+                            waiting_for_server = true;
+                            for (const e of newEdges) con.push(e);
+
+                            const hypotheticalEdges = con.slice();
+                            const raw = find_triangles_from_edges(hypotheticalEdges);
+                            const existing = new Set(tris.map(t => triKeyFromPoints(t.points)));
+                            const newCandidates = raw.filter(t => !existing.has(triKeyFromPoints(t)));
+
+                            sendWS({ type: 'make_move', room: currentRoomId, path });
+
+                            if (newCandidates.length === 0) {
+                                sendWS({ type: 'end_turn', room: currentRoomId });
+                                claimMode = false;
+                            } else {
+                                claimMode = true;
+                                updateClaimCandidates();
+                            }
+                        } else {
+                            applyLocalMoveFromPath(path, { autoClaim: false });
+                        }
+                    }
                 }
             }
-        }
 
-        function handleCanvasMove(clientX, clientY) {
-            if (sel === null || animating || waiting_for_server || !gameStarted) return;
-            const pos = canvasPosFromEvent(clientX, clientY);
-            drag_pos = [pos.x, pos.y];
+            sel = null;
+            drag_pos = null;
             drawImmediate();
         }
 
-        gameCanvas.addEventListener('mousedown', ev => {
-            handleCanvasDown(ev.clientX, ev.clientY);
+        gameCanvas.addEventListener('pointerdown', (ev) => {
+            gameCanvas.setPointerCapture(ev.pointerId);
+            handlePointerDown(ev);
         });
-        gameCanvas.addEventListener('mousemove', ev => {
-            handleCanvasMove(ev.clientX, ev.clientY);
+        gameCanvas.addEventListener('pointermove', handlePointerMove);
+        gameCanvas.addEventListener('pointerup', (ev) => {
+            handlePointerUp(ev);
+            try { gameCanvas.releasePointerCapture(ev.pointerId); } catch (e) { }
         });
-        gameCanvas.addEventListener('touchstart', ev => {
-            ev.preventDefault();
-            const t = ev.touches[0];
-            if (!t) return;
-            handleCanvasDown(t.clientX, t.clientY);
-        }, { passive: false });
-        gameCanvas.addEventListener('touchmove', ev => {
-            ev.preventDefault();
-            const t = ev.touches[0];
-            if (!t) return;
-            handleCanvasMove(t.clientX, t.clientY);
-        }, { passive: false });
-        gameCanvas.addEventListener('touchend', ev => {
-            const t = ev.changedTouches[0];
-            if (!t) return;
-            handleCanvasDown(t.clientX, t.clientY);
+        gameCanvas.addEventListener('pointercancel', () => {
+            pointerIsDown = false;
             sel = null;
             drag_pos = null;
             drawImmediate();
@@ -2319,17 +2525,41 @@
         if (endTurnBtn) {
             endTurnBtn.addEventListener('click', () => {
                 if (!gameStarted || game_over) return;
-                if (!currentRoomId || !wsConnected) {
-                    claimMode = false;
-                    turn = (turn + 1) % moves.length;
-                    updateGameHUD();
-                    drawImmediate();
+
+                // локальный режим или single player
+                if (!currentRoomId || !wsConnected || isSinglePlayer) {
+                    if (claimMode && claimCandidates.length > 0) {
+                        const triangles = claimCandidates.map(c => c.points);
+                        localAcceptClaims(triangles);
+                    } else {
+                        claimMode = false;
+                        turn = (turn + 1) % moves.length;
+                        updateGameHUD();
+                        drawImmediate();
+                        if (isSinglePlayer && !game_over && turn === 1) {
+                            scheduleBotMove();
+                        }
+                    }
                     return;
                 }
+
+                // онлайн-игра
                 waiting_for_server = true;
                 sendWS({ type: 'end_turn', room: currentRoomId });
                 claimMode = false;
                 endTurnBtn.disabled = true;
+            });
+        }
+
+        if (gameExitBtn) {
+            gameExitBtn.addEventListener('click', () => {
+                if (!isSinglePlayer && ws && ws.readyState === WebSocket.OPEN) {
+                    ws.close();
+                }
+                gameStarted = false;
+                resetRoomClientState();
+                hideWinnerOverlay();
+                showMainMenu();
             });
         }
 
@@ -2338,6 +2568,41 @@
                 setupCanvasSize();
             }
         });
+
+        /* ===== Single Player vs Bot ===== */
+        function startSinglePlayerGame() {
+            isSinglePlayer = true;
+
+            if (ws && ws.readyState === WebSocket.OPEN) {
+                ws.close();
+            }
+
+            stopRoomsAutoRefresh();
+
+            con = [];
+            tris = [];
+            claimMode = false;
+            claimCandidates = [];
+            claimRects = [];
+            game_over = false;
+            winner = null;
+            waiting_for_server = false;
+            animating = false;
+            gameStarted = true;
+
+            const playerName = nameInput.value.trim() || 'Player';
+            playerNames = [playerName, 'Bot'];
+            playerAvatars = [localAvatarDataUrl || null, null];
+
+            moves = [DEFAULT_MOVES, DEFAULT_MOVES];
+            score = [0, 0];
+            turn = 0;
+            currentPlayerIndex = 0;
+
+            hideWinnerOverlay();
+            updateGameHUD();
+            showGameScreen();
+        }
     </script>
 
 </body>
