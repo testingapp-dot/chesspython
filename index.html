@@ -2,964 +2,2341 @@
 <html lang="en">
 
 <head>
-  <meta charset="utf-8" />
-  <!-- mobile-friendly viewport, lock zoom so game remains usable -->
-  <!-- Fullscreen and portrait lock -->
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="mobile-web-app-capable" content="yes">
-  <meta name="full-screen" content="yes">
-  <meta name="screen-orientation" content="portrait">
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+    <title>Triango — Main Menu + Lobby + Game</title>
+    <style>
+        :root {
+            --bg1: #0b1220;
+            --bg2: #020617;
+            --panel: #0f1721cc;
+            --glass: rgba(255, 255, 255, 0.04);
+            --accent: #3cc078;
+            --accent2: #2a8bd6;
+            --muted: #cfd8e3aa;
+            --radius: 18px;
+            --pad: 16px;
+            --glass-border: rgba(255, 255, 255, 0.06);
+        }
 
-  <title>Hex Game — Multiplayer (Mobile) — modified</title>
-  <style>
-    html,
-    body {
-      margin: 0;
-      padding: 0;
-      height: 100%;
-      width: 100%;
-      overflow: hidden;
-      background: #f5f5dc;
-      font-family: Arial, Helvetica, sans-serif;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-    }
+        * {
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
 
-    .wrap {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      width: 100vw;
-      height: 100dvh;
-      padding: 0;
-    }
+        html,
+        body {
+            height: 100%;
+            margin: 0;
+            font-family: Inter, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background:
+                radial-gradient(1200px 600px at 10% 10%, rgba(58, 64, 96, 0.25), transparent 55%),
+                linear-gradient(180deg, var(--bg1), var(--bg2));
+            color: #eef2ff;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
 
-    #game {
-      display: block;
-      background: #f5f5dc;
-      width: 100%;
-      height: 100%;
-      touch-action: none;
-      border: none;
-      margin: 0;
-      padding: 0;
-    }
+        /* ===================== MAIN MENU ===================== */
 
-    .note {
-      position: fixed;
-      left: 8px;
-      bottom: 8px;
-      color: #ccc;
-      font-size: 12px;
-    }
-  </style>
+        .main-menu {
+            max-width: 420px;
+            margin: 0 auto;
+            padding: 18px 20px 32px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 18px;
+            min-height: 100vh;
+        }
+
+        .top-bar {
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+        }
+
+        .pill-btn,
+        .coin-pill,
+        .profile-pill,
+        .howto-pill {
+            border-radius: 999px;
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.45);
+            background: linear-gradient(145deg, rgba(18, 27, 48, 0.95), rgba(30, 46, 90, 0.98));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .pill-btn {
+            width: 42px;
+            height: 42px;
+            font-size: 20px;
+            cursor: pointer;
+        }
+
+        .coin-pill {
+            padding: 6px 12px;
+            gap: 6px;
+            font-weight: 700;
+            font-size: 14px;
+            background: linear-gradient(145deg, #20141a, #3a2832);
+        }
+
+        .coin-icon {
+            width: 24px;
+            height: 24px;
+            border-radius: 999px;
+            background: radial-gradient(circle at 30% 30%, #ffeaa0, #ffb635);
+            box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.45);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            color: #4b2b05;
+        }
+
+        .profile-pill {
+            flex: 1;
+            padding: 4px 10px;
+            gap: 8px;
+            background: linear-gradient(145deg, #101728, #17233e);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: flex-start;
+            transition: all 180ms ease-out;
+        }
+
+        .profile-pill.open {
+            flex-direction: column;
+            align-items: stretch;
+        }
+
+        .profile-avatar {
+            width: 34px;
+            height: 34px;
+            border-radius: 12px;
+            background: radial-gradient(circle at 30% 20%, #ffe2b5, #f7a15d);
+            position: relative;
+            box-shadow: 0 6px 14px rgba(0, 0, 0, 0.5);
+            flex-shrink: 0;
+        }
+
+        .profile-avatar::after {
+            content: '';
+            position: absolute;
+            inset: 7px;
+            border-radius: 999px 999px 60% 60%;
+            border-bottom: 3px solid rgba(0, 0, 0, 0.18);
+        }
+
+        .profile-meta {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            gap: 2px;
+        }
+
+        .profile-name {
+            font-size: 13px;
+            font-weight: 700;
+        }
+
+        .profile-extra {
+            display: none;
+            flex-direction: column;
+            gap: 6px;
+            margin-top: 6px;
+            width: 100%;
+        }
+
+        .profile-pill.open .profile-extra {
+            display: flex;
+        }
+
+        .upload-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 6px 10px;
+            border-radius: 999px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            background: linear-gradient(135deg, #1f2937, #020617);
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            align-self: flex-start;
+        }
+
+        .upload-btn span {
+            margin-left: 6px;
+        }
+
+        .avatar-error {
+            font-size: 11px;
+            color: #ff7b7b;
+            min-height: 14px;
+        }
+
+        .howto-pill {
+            padding: 8px 14px;
+            font-size: 13px;
+            font-weight: 700;
+            background: linear-gradient(145deg, #3b2b7a, #5b35b0);
+            cursor: pointer;
+        }
+
+        .logo {
+            margin-top: 4px;
+            text-align: center;
+        }
+
+        .logo-main {
+            font-size: 32px;
+            font-weight: 900;
+            letter-spacing: 0.16em;
+        }
+
+        .logo-main span {
+            color: #ffd75e;
+        }
+
+        .logo-main .boomerang {
+            display: inline-block;
+            width: 24px;
+            height: 24px;
+            border-radius: 18px 18px 4px 4px;
+            margin: 0 4px;
+            background:
+                radial-gradient(circle at 30% 10%, #ffffff, #9be4ff 50%, #00b8ff 75%, #0171ff 100%);
+            transform: rotate(45deg) translateY(3px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.55);
+        }
+
+        .modes {
+            margin-top: 6px;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .mode-card {
+            position: relative;
+            border-radius: 22px;
+            padding: 0 14px 14px;
+            overflow: hidden;
+            box-shadow: 0 18px 36px rgba(0, 0, 0, 0.55);
+        }
+
+        .mode-header {
+            height: 26px;
+            margin: 0 -14px 6px;
+            padding: 0 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+            font-weight: 600;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+        }
+
+        .mode-body {
+            padding: 8px 6px 12px;
+            text-align: center;
+        }
+
+        .mode-title {
+            font-size: 22px;
+            font-weight: 900;
+            letter-spacing: 0.1em;
+            margin-bottom: 4px;
+        }
+
+        .mode-sub {
+            font-size: 12px;
+            font-weight: 700;
+            letter-spacing: 0.18em;
+        }
+
+        .mode-footer {
+            margin-top: 10px;
+            display: flex;
+            align-items: flex-end;
+            justify-content: center;
+            gap: 14px;
+            font-size: 11px;
+            font-weight: 700;
+        }
+
+        .mode-footer span {
+            padding-top: 4px;
+        }
+
+        .mode-pill {
+            padding: 2px 10px 3px;
+            border-radius: 999px;
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+
+        .mode-play {
+            background: radial-gradient(circle at 12% 0%, #54b6ff 0, #0055ff 50%, #061631 100%);
+            cursor: pointer;
+        }
+
+        .mode-play .mode-header {
+            background: linear-gradient(90deg, #31d36c, #66ffba);
+            color: #053820;
+        }
+
+        .mode-play .mode-title {
+            color: #ffffff;
+        }
+
+        .mode-play .mode-sub {
+            color: rgba(199, 226, 255, 0.9);
+        }
+
+        .mode-play:hover {
+            transform: translateY(-3px);
+            transition: transform 160ms ease-out;
+        }
+
+        .mode-pass {
+            background: radial-gradient(circle at 10% 0%, #ffb267 0, #ff583c 45%, #31101a 100%);
+        }
+
+        .mode-pass .mode-header {
+            background: linear-gradient(90deg, #ff9655, #ffce63);
+            color: #451106;
+        }
+
+        .mode-pass .mode-title {
+            color: #ffe7df;
+        }
+
+        .mode-pass .mode-sub {
+            color: #fbd3c3;
+        }
+
+        .mode-pass .mode-footer .mode-pill {
+            background: rgba(0, 0, 0, 0.26);
+        }
+
+        .mode-single {
+            background: radial-gradient(circle at 10% 0%, #8effb2 0, #20b56a 40%, #051b14 100%);
+        }
+
+        .mode-single .mode-header {
+            background: linear-gradient(90deg, #74ffb0, #b4ffde);
+            color: #074224;
+        }
+
+        .mode-single .mode-title {
+            color: #e6fff1;
+        }
+
+        .mode-single .mode-sub {
+            color: #c7ffe1;
+        }
+
+        .mode-single .mode-footer .mode-pill {
+            background: rgba(0, 0, 0, 0.18);
+        }
+
+        .tiny-avatars {
+            margin-top: 8px;
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .tiny-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 999px;
+            background: radial-gradient(circle at 30% 15%, #ffe7bf, #f59f71 40%, #b04d28 85%);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.5);
+        }
+
+        .tiny-avatar.bot {
+            background: radial-gradient(circle at 30% 10%, #d7f2ff, #95d0ff 45%, #356faa 80%);
+        }
+
+        .tiny-avatar.silhouette {
+            background: radial-gradient(circle at 30% 10%, #78c4ff, #257bdb 65%, #0450a8 92%);
+        }
+
+        /* ===================== LOBBY ===================== */
+
+        .wrap {
+            width: 100%;
+            max-width: 980px;
+            margin: 24px auto 40px;
+            padding: 20px;
+            display: flex;
+            gap: 20px;
+            align-items: flex-start;
+            justify-content: center;
+        }
+
+        #lobbyWrap {
+            display: none;
+        }
+
+        .left {
+            width: 420px;
+            min-width: 320px;
+            display: flex;
+            flex-direction: column;
+            gap: 18px;
+        }
+
+        .card {
+            border-radius: var(--radius);
+            background: linear-gradient(180deg, rgba(255, 255, 255, 0.02), rgba(255, 255, 255, 0.01));
+            padding: 14px;
+            border: 1px solid var(--glass-border);
+            box-shadow: 0 12px 30px rgba(2, 6, 23, 0.55);
+        }
+
+        .card h2 {
+            margin: 0 0 8px 0;
+            font-size: 16px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .card .muted {
+            color: var(--muted);
+            font-size: 13px
+        }
+
+        .row {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+
+        .inputs {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            flex: 1;
+        }
+
+        .field {
+            background: var(--glass);
+            border-radius: 12px;
+            padding: 10px 12px;
+            border: 1px solid rgba(255, 255, 255, 0.04);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .field input {
+            border: 0;
+            background: transparent;
+            color: inherit;
+            font-size: 15px;
+            outline: none;
+            width: 100%;
+        }
+
+        .small-btn {
+            padding: 10px 12px;
+            border-radius: 10px;
+            background: linear-gradient(180deg, rgba(255, 255, 255, 0.02), rgba(255, 255, 255, 0.01));
+            border: 1px solid rgba(255, 255, 255, 0.04);
+            cursor: pointer;
+            color: inherit;
+            font-weight: 600;
+        }
+
+        .pc-select {
+            display: flex;
+            gap: 8px;
+        }
+
+        .pc-select button {
+            min-width: 54px;
+            padding: 10px 12px;
+            border-radius: 12px;
+            border: 0;
+            background: #22252b;
+            color: #dfe7f6;
+            font-weight: 700;
+            cursor: pointer;
+            box-shadow: inset 0 -6px 16px rgba(0, 0, 0, 0.35);
+        }
+
+        .pc-select button.active {
+            background: linear-gradient(90deg, var(--accent), #68d09a);
+            color: #02120a;
+            box-shadow: 0 8px 30px rgba(60, 192, 120, 0.4);
+            transform: translateY(-2px);
+        }
+
+        .primary {
+            background: linear-gradient(90deg, #6bb3ff, #6aa9ff);
+            color: #031023;
+            border-radius: 12px;
+            padding: 12px 18px;
+            font-weight: 800;
+            border: 0;
+            cursor: pointer;
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            box-shadow: 0 12px 30px rgba(42, 139, 214, 0.4);
+        }
+
+        .secondary {
+            background: linear-gradient(90deg, #2a2f37, #2d3138);
+            color: #fff;
+            border-radius: 12px;
+            padding: 12px 18px;
+            font-weight: 700;
+            border: 0;
+            cursor: pointer;
+        }
+
+        .right {
+            width: 340px;
+            min-width: 280px;
+            display: flex;
+            flex-direction: column;
+            gap: 18px;
+        }
+
+        .players-list,
+        .servers-list {
+            padding: 12px;
+            border-radius: 16px;
+            background: linear-gradient(180deg, rgba(255, 255, 255, 0.02), rgba(255, 255, 255, 0.01));
+            border: 1px solid var(--glass-border);
+            box-shadow: 0 10px 28px rgba(0, 0, 0, 0.55);
+        }
+
+        .players-list h3,
+        .servers-list h3 {
+            margin: 0 0 10px 0;
+            font-size: 15px;
+        }
+
+        .player-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px;
+            border-radius: 10px;
+            margin-bottom: 8px;
+            background: linear-gradient(180deg, rgba(255, 255, 255, 0.02), transparent);
+        }
+
+        .avatar {
+            width: 42px;
+            height: 42px;
+            border-radius: 10px;
+            background: linear-gradient(135deg, #ffd88a, #f07b65);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 900;
+            color: #04110d;
+            box-shadow: 0 6px 18px rgba(0, 0, 0, 0.4);
+            overflow: hidden;
+            background-size: cover;
+            background-position: center;
+        }
+
+        .player-meta {
+            flex: 1;
+        }
+
+        .player-meta b {
+            display: block
+        }
+
+        .player-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .server-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px;
+            border-radius: 10px;
+            margin-bottom: 10px;
+            background: linear-gradient(180deg, rgba(255, 255, 255, 0.02), transparent);
+        }
+
+        .join-server {
+            padding: 8px 12px;
+            border-radius: 8px;
+            background: linear-gradient(90deg, var(--accent2), #6aa9ff);
+            border: 0;
+            color: #021225;
+            font-weight: 800;
+            cursor: pointer;
+        }
+
+        .vkb {
+            position: fixed;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            z-index: 80;
+            transform: translateY(100%);
+            transition: transform 240ms cubic-bezier(.22, .9, .25, 1);
+            padding: 12px;
+            background: linear-gradient(180deg, rgba(6, 10, 18, 0.96), rgba(10, 14, 22, 0.98));
+            box-shadow: 0 -18px 48px rgba(3, 6, 12, 0.6);
+            border-top-left-radius: 18px;
+            border-top-right-radius: 18px;
+            border: 1px solid rgba(255, 255, 255, 0.03);
+        }
+
+        .vkb.show {
+            transform: translateY(0%);
+        }
+
+        .vkb .row {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 8px;
+        }
+
+        .key {
+            flex: 1;
+            padding: 12px 8px;
+            border-radius: 10px;
+            background: #1e2329;
+            border: 1px solid rgba(255, 255, 255, 0.03);
+            text-align: center;
+            font-weight: 700;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .key.wide {
+            flex: 2;
+        }
+
+        .key.space {
+            flex: 3;
+        }
+
+        .key.alt {
+            background: #2c2f36;
+            color: #fff;
+        }
+
+        .kbd-ctrl {
+            display: flex;
+            gap: 8px;
+            justify-content: flex-end;
+        }
+
+        /* ===================== GAME SCREEN ===================== */
+
+        #gameScreen {
+            display: none;
+            min-height: 100vh;
+            padding: 16px 12px 20px;
+            max-width: 900px;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .game-top-bar {
+            display: flex;
+            justify-content: space-between;
+            gap: 8px;
+        }
+
+        .game-player-card {
+            flex: 1;
+            min-width: 0;
+            padding: 8px 10px;
+            border-radius: 18px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: linear-gradient(135deg, #020617, #020617);
+            border: 1px solid rgba(148, 163, 184, 0.5);
+            box-shadow: 0 12px 28px rgba(0, 0, 0, 0.7);
+            font-size: 12px;
+            font-weight: 700;
+        }
+
+        .game-player-card .avatar-circle {
+            width: 32px;
+            height: 32px;
+            border-radius: 999px;
+            background: radial-gradient(circle at 30% 10%, #fff7dc, #ffd18b 40%, #e88a44 80%);
+            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.45);
+        }
+
+        .game-player-meta {
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+        }
+
+        .game-player-name {
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .game-player-label {
+            font-size: 10px;
+            color: var(--muted);
+        }
+
+        .game-player-card.me {
+            align-self: flex-end;
+            padding: 10px 14px;
+            font-size: 13px;
+            background: linear-gradient(135deg, #0f172a, #1d3655);
+            border-color: rgba(96, 165, 250, 0.9);
+        }
+
+        .badge-pill {
+            padding: 2px 8px;
+            border-radius: 999px;
+            font-size: 10px;
+            font-weight: 700;
+            background: rgba(15, 23, 42, 0.95);
+        }
+
+        .game-board-wrap {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 8px 0 12px;
+        }
+
+        .hex-board {
+            width: min(92vw, 520px);
+            aspect-ratio: 1;
+            position: relative;
+        }
+
+        .hex-board::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background:
+                radial-gradient(circle at 30% 10%, rgba(148, 163, 184, 0.3), transparent 55%),
+                radial-gradient(circle at 80% 90%, rgba(56, 189, 248, 0.25), transparent 55%),
+                linear-gradient(180deg, #020617, #020617);
+            clip-path: polygon(25% 3%, 75% 3%, 97% 50%, 75% 97%, 25% 97%, 3% 50%);
+            box-shadow:
+                0 30px 55px rgba(0, 0, 0, 0.95),
+                0 0 0 4px rgba(15, 23, 42, 0.95);
+        }
+
+        .hex-inner {
+            position: absolute;
+            inset: 7%;
+            clip-path: polygon(25% 3%, 75% 3%, 97% 50%, 75% 97%, 25% 97%, 3% 50%);
+            background:
+                radial-gradient(circle at 20% 15%, rgba(148, 163, 184, 0.16), transparent 45%),
+                radial-gradient(circle at 80% 80%, rgba(59, 130, 246, 0.2), transparent 55%),
+                #020617;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        #gameCanvas {
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+
+        .game-bottom-bar {
+            margin-top: 4px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+        }
+
+        #gameBottomPlayer {
+            width: 100%;
+            max-width: 360px;
+        }
+
+        /* ====== winner overlay ====== */
+        #winnerOverlay {
+            position: fixed;
+            inset: 0;
+            z-index: 200;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            background: radial-gradient(circle at 20% 0, rgba(59, 130, 246, 0.35), transparent 55%),
+                radial-gradient(circle at 80% 100%, rgba(34, 197, 94, 0.35), transparent 55%),
+                rgba(15, 23, 42, 0.96);
+            color: #e5e7eb;
+        }
+
+        #winnerOverlay .card {
+            border-radius: 24px;
+            padding: 22px 26px 20px;
+            max-width: 360px;
+            width: 90%;
+            text-align: center;
+            background: radial-gradient(circle at 0 0, rgba(250, 250, 250, 0.1), transparent 55%),
+                linear-gradient(145deg, #020617, #020617);
+            border: 1px solid rgba(148, 163, 184, 0.5);
+            box-shadow: 0 24px 60px rgba(0, 0, 0, 0.8);
+        }
+
+        #winnerOverlay .winner-avatar {
+            width: 70px;
+            height: 70px;
+            border-radius: 999px;
+            margin: 0 auto 10px;
+            background: radial-gradient(circle at 30% 10%, #fff7dc, #ffd18b 40%, #e88a44 80%);
+            box-shadow: 0 16px 32px rgba(0, 0, 0, 0.6);
+            background-size: cover;
+            background-position: center;
+            overflow: hidden;
+            border: 2px solid rgba(250, 250, 250, 0.9);
+        }
+
+        #winnerOverlay .emoji {
+            font-size: 40px;
+            margin-bottom: 6px;
+        }
+
+        #winnerOverlay h2 {
+            margin: 4px 0 6px;
+            font-size: 22px;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+        }
+
+        #winnerOverlay p {
+            margin: 4px 0;
+            font-size: 14px;
+            color: #cbd5f5;
+        }
+
+        #winnerCountdown {
+            font-size: 13px;
+            margin-top: 8px;
+            color: #e5e7eb;
+            opacity: 0.9;
+        }
+
+        #winnerOverlay .btn {
+            margin-top: 14px;
+            padding: 10px 16px;
+            border-radius: 999px;
+            border: 0;
+            cursor: pointer;
+            font-weight: 700;
+            font-size: 13px;
+            background: linear-gradient(90deg, #22c55e, #4ade80);
+            color: #022c16;
+            box-shadow: 0 10px 26px rgba(34, 197, 94, 0.5);
+        }
+
+        @media (max-width:920px) {
+            .wrap {
+                padding: 12px;
+                gap: 12px;
+                flex-direction: column;
+                align-items: stretch
+            }
+
+            .left,
+            .right {
+                width: 100%
+            }
+        }
+    </style>
 </head>
 
 <body>
-  <div class="wrap"><canvas id="game"></canvas></div>
-  <div class="note">Mobile-first layout — tap dots to play. Run server.js and open this page.</div>
 
-  <script>
-    /*
-     Changes made:
-     - Removed separate "Claim" button. Clicking a free triangle immediately claims it for the player (if it's their turn).
-     - End Turn button appears **only** when: (a) it's this player's turn, and (b) there are unclaimed triangles after their move.
-     - If after placing a line there are NO new triangles, the client will automatically end the turn (send end_turn) and the next player starts.
-     - Player cannot place lines when it's not their turn. Player must place a line first before End Turn can appear.
-     - Works both in local fallback mode and with server. Uses optimistic local edges to decide whether to auto-end-turn.
-     - **Only addition**: on-screen keyboard in the lobby for editing Name / Room. It does not modify game logic.
-    */
+    <!-- ===================== MAIN MENU ===================== -->
+    <div id="mainMenu" class="main-menu">
+        <div class="top-bar">
+            <button class="pill-btn" aria-label="Settings">⚙</button>
 
-    ///// CONFIG
-    const LOGICAL_BASE_W = 1000;
-    const LOGICAL_BASE_H = 700;
-    const BASE_SP = 60;
-    const BASE_DR = 10;
-    const BASE_FONT_PX = 22;
-    const BASE_BIG_FONT_PX = 64;
+            <div class="coin-pill">
+                <div class="coin-icon">¤</div>
+                <span>3400</span>
+            </div>
 
-    const R = 4;
-    const STEP_POINTS = 4;
-    const DEFAULT_MOVES = 15;
+            <div class="profile-pill" id="profilePill">
+                <div class="profile-main" style="display:flex;align-items:center;gap:8px;width:100%;">
+                    <div class="profile-avatar" id="profileAvatar"></div>
+                    <div class="profile-meta">
+                        <div class="profile-name">Player</div>
+                    </div>
+                </div>
+                <div class="profile-extra">
+                    <label class="upload-btn" id="uploadAvatarLabel">
+                        <svg width="14" height="14" viewBox="0 0 24 24">
+                            <path fill="currentColor" d="M5 20h14v-2H5v2zm7-16l-5 5h3v4h4v-4h3l-5-5z" />
+                        </svg>
+                        <span>Upload avatar</span>
+                        <input type="file" id="avatarInput" accept="image/*" hidden>
+                    </label>
+                    <div class="avatar-error" id="avatarError"></div>
+                </div>
+            </div>
 
-    ///// Networking
-    const WS_URL = 'wss://frosty-colden.185-234-114-50.plesk.page';
+            <button class="howto-pill">How to play?</button>
+        </div>
 
-    ///// DOM + canvas
-    const canvas = document.getElementById('game');
-    const ctx = canvas.getContext('2d', { alpha: false });
+        <div class="logo">
+            <div class="logo-main">
+                TRI<span class="boomerang"></span>NGO
+            </div>
+        </div>
 
-    function setupCanvasSize() {
-      const DPR = window.devicePixelRatio || 1;
-      const cssWidth = window.innerWidth;
-      const cssHeight = window.innerHeight;
-      canvas.style.width = cssWidth + 'px';
-      canvas.style.height = cssHeight + 'px';
-      canvas.width = Math.round(cssWidth * DPR);
-      canvas.height = Math.round(cssHeight * DPR);
-      WIDTH = cssWidth; HEIGHT = cssHeight;
-      scale = Math.min(WIDTH / LOGICAL_BASE_W, HEIGHT / LOGICAL_BASE_H);
-      DPR_SCALE = DPR;
-      ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
-      SP = Math.max(12, Math.round(BASE_SP * scale));
-      DR = Math.max(6, Math.round(BASE_DR * scale));
-      FONT = `${Math.max(10, Math.round(BASE_FONT_PX * scale))}px Arial`;
-      BIG_FONT = `${Math.min(48, Math.max(24, Math.round(BASE_BIG_FONT_PX * Math.max(0.6, scale))))}px Arial`;
-      LINE_THICKNESS = Math.max(2, Math.round(4 * scale));
-    }
-    window.addEventListener('resize', () => { setupCanvasSize(); drawImmediate(); });
-    setupCanvasSize();
-    window.addEventListener('resize', () => { setupCanvasSize(); drawImmediate(); });
+        <div class="modes">
+            <div id="playPanel" class="mode-card mode-play">
+                <div class="mode-header">23469 Players Online</div>
+                <div class="mode-body">
+                    <div class="mode-title">PLAY</div>
+                    <div class="mode-sub">ONLINE MULTIPLAYER</div>
 
-    ///// Colors
-    const BG = '#f5f5dc';
-    const DOT = '#222629';
-    const LINE_COLOR = '#bc1f3d';
-    const PLAYERS_COLORS = ['#8e44ad', '#fe8d17', '#2e7d32', '#207ec5'];
+                    <div class="tiny-avatars">
+                        <div class="tiny-avatar"></div>
+                        <div class="tiny-avatar silhouette"></div>
+                        <div class="tiny-avatar silhouette"></div>
+                        <div class="tiny-avatar silhouette"></div>
+                    </div>
 
-    ///// Grid
-    const pts = [];
-    const idx = {};
-    function buildGrid() {
-      pts.length = 0;
-      for (let q = -R + 1; q < R; q++) {
-        const r1 = Math.max(-R + 1, -q - R + 1);
-        const r2 = Math.min(R - 1, -q + R - 1);
-        for (let rr = r1; rr <= r2; rr++) {
-          const pos = toxy(q, rr);
-          idx[`${q},${rr}`] = pts.length;
-          pts.push({ pos, q, r: rr });
-        }
-      }
-    }
-    function toxy(q, r) {
-      const x = SP * (1.5 * q);
-      const y = SP * (Math.sqrt(3) * (r + q / 2));
-      const cssW = canvas.clientWidth, cssH = canvas.clientHeight;
-      return [Math.round(x + cssW / 2), Math.round(y + cssH / 2 + Math.max(20 * scale, 10))];
-    }
-    buildGrid();
+                    <div class="mode-footer">
+                        <span>YOU</span>
+                        <span>VS</span>
+                        <span>?</span>
+                        <span>VS</span>
+                        <span>?</span>
+                    </div>
+                </div>
+            </div>
 
-    ///// Game state
-    let con = [];
-    let tris = [];
-    let sel = null, turn = 0;
-    let moves = [DEFAULT_MOVES, DEFAULT_MOVES, DEFAULT_MOVES, DEFAULT_MOVES];
-    let score = [0, 0, 0, 0];
-    let game_over = false, winner = null;
-    let tri_delay = Math.max(120, Math.round(400 * scale));
-    let animating = false, waiting_for_server = false;
+            <div class="mode-card mode-single">
+                <div class="mode-header">Single Player</div>
+                <div class="mode-body">
+                    <div class="mode-title">SINGLE</div>
+                    <div class="mode-sub">PLAYER</div>
 
-    ///// Lobby & UI
-    let room_chosen = null, player_index = null, is_host = false, lobby_players = [];
-    let input_active = null, input_name = 'Player', input_room = 'room1';
-    let selectedPlayerCount = 4;
-    let servers = [];
-    let serversButtonRects = [];
-    let showWinnerOverlay = false, winnerOverlayData = null, winnerOverlayTimeout = null, winnerOverlayCountdown = 0, winnerOverlayInterval = null;
-    let playerNames = [];
+                    <div class="tiny-avatars">
+                        <div class="tiny-avatar"></div>
+                        <div class="tiny-avatar bot"></div>
+                    </div>
 
-    ///// Claim state
-    let claimMode = false;                // true when player may claim triangles (after placing a line and triangles exist)
-    let claimCandidates = [];             // [{points:[a,b,c], center:[x,y], key}]
-    let claimRects = [];                  // rects for candidate centers (for hit test)
-    let endTurnRect = null;
+                    <div class="mode-footer">
+                        <span class="mode-pill">YOU</span>
+                        <span>VS</span>
+                        <span class="mode-pill">BOT</span>
+                    </div>
+                </div>
+            </div>
 
-    ///// Keyboard state (new)
-    let keyboardRects = []; // {x,y,w,h,key}
-    const MAX_INPUT_LENGTH = 20;
+            <div id="subPanel" class="mode-card mode-pass" style="cursor:pointer;">
+                <div class="mode-header">Subscription</div>
+                <div class="mode-body">
+                    <div class="mode-title" style="font-size:20px;">BUY SUBSCRIPTION</div>
+                    <div class="mode-sub">PLAY WITHOUT ADS</div>
 
-    ///// Helpers
-    function sx(x) { return Math.round(x * scale); }
-    function sy(y) { return Math.round(y * scale); }
-    function sRect(x, y, w, h) { return { x: sx(x), y: sy(y), w: Math.round(w * scale), h: Math.round(h * scale) }; }
+                    <div class="mode-footer">
+                        <span class="mode-pill" style="padding:6px 20px;font-size:12px;">
+                            BUY
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 
-    function drawHexagonLocal(ctx, color, center, radius, fill = true, width = 0) {
-      ctx.beginPath();
-      for (let i = 0; i < 6; i++) { const ang = (Math.PI / 180) * (60 * i - 30); const x = center[0] + radius * Math.cos(ang); const y = center[1] + radius * Math.sin(ang); if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y); }
-      ctx.closePath();
-      if (fill) { ctx.fillStyle = color; ctx.fill(); }
-      if (width > 0) { ctx.lineWidth = width; ctx.strokeStyle = LINE_COLOR; ctx.stroke(); }
-    }
-    function drawLineLocal(ctx, a, b, thickness = LINE_THICKNESS) { ctx.beginPath(); ctx.moveTo(a[0], a[1]); ctx.lineTo(b[0], b[1]); ctx.lineWidth = thickness; ctx.strokeStyle = LINE_COLOR; ctx.stroke(); }
-    function roundRectLocal(ctx, x, y, w, h, r, fill = false, fillStyle = '#000') { ctx.beginPath(); ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r); ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath(); if (fill) { ctx.fillStyle = fillStyle; ctx.fill(); } else ctx.stroke(); }
+    <!-- ===================== LOBBY ===================== -->
+    <div id="lobbyWrap" class="wrap">
+        <div class="left">
+            <button id="backBtn" class="small-btn" style="align-self:flex-start;margin-bottom:4px;">← Назад</button>
 
-    function shadeColor(hex, amt) { const c = hex.replace('#', ''); const num = parseInt(c, 16); let r = (num >> 16) + amt; if (r > 255) r = 255; if (r < 0) r = 0; let g = ((num >> 8) & 0x00FF) + amt; if (g > 255) g = 255; if (g < 0) g = 0; let b = (num & 0x0000FF) + amt; if (b > 255) b = 255; if (b < 0) b = 0; return `rgb(${r},${g},${b})`; }
+            <div class="card" id="lobby-card">
+                <h2>
+                    <svg width="18" height="18" viewBox="0 0 24 24" style="opacity:.9">
+                        <path fill="currentColor" d="M12 2L2 7v7c0 5 4 9 10 9s10-4 10-9V7l-10-5z" />
+                    </svg>
+                    Create Server
+                </h2>
 
-    ///// UI panels & drawing
-    function drawPlayerPanels() {
-      const pad = Math.max(6, sx(6));
-      const box_w = Math.min(sx(220), Math.round(canvas.clientWidth * 0.45));
-      const box_h = Math.min(sy(80), Math.round(canvas.clientHeight * 0.16));
-      const positions = [
-        [pad, pad],
-        [canvas.clientWidth - box_w - pad, pad],
-        [pad, canvas.clientHeight - box_h - pad],
-        [canvas.clientWidth - box_w - pad, canvas.clientHeight - box_h - pad]
-      ];
-      ctx.font = FONT; ctx.textBaseline = 'top';
-      for (let i = 0; i < 4; i++) {
-        const [x, y] = positions[i];
-        const color = PLAYERS_COLORS[i];
-        const active = (i === turn);
-        const disabled = (score[i] >= 15 || moves[i] <= 0);
-        const rect_color = disabled ? '#3c3c46' : (active ? shadeColor(color, 40) : '#323238');
-        roundRectLocal(ctx, x, y, box_w, box_h, 10, true, rect_color);
-        ctx.lineWidth = Math.max(1, Math.round(3 * scale)); ctx.strokeStyle = color; roundRectLocal(ctx, x, y, box_w, box_h, 10, false);
-        ctx.fillStyle = '#fff';
-        let displayName = null;
-        if (Array.isArray(playerNames) && playerNames[i]) displayName = playerNames[i];
-        else { const p = lobby_players.find(pp => pp.index === i); if (p && p.name) displayName = p.name; }
-        if (!displayName) displayName = `P${i + 1}`;
-        const shortName = displayName.length > 14 ? displayName.slice(0, 13) + '…' : displayName;
-        ctx.font = `${Math.max(10, Math.round(16 * scale))}px Arial`; ctx.fillText(shortName, x + sx(10), y + sy(8));
-        ctx.font = `${Math.max(10, Math.round(14 * scale))}px Arial`; ctx.fillText(`Score: ${score[i]}`, x + sx(10), y + sy(34));
-        ctx.fillText(`Moves: ${moves[i]}`, x + sx(110), y + sy(34));
-      }
-    }
+                <div class="row">
+                    <div class="inputs">
+                        <div class="field">
+                            <svg width="18" height="18" viewBox="0 0 24 24">
+                                <path fill="currentColor"
+                                    d="M12 12a5 5 0 100-10 5 5 0 000 10zm0 2c-4.4 0-8 2.2-8 4.9V22h16v-3.1c0-2.7-3.6-4.9-8-4.9z" />
+                            </svg>
+                            <input id="nameInput" type="text" placeholder="Your name" value="Player" />
+                        </div>
+                        <div class="field">
+                            <svg width="18" height="18" viewBox="0 0 24 24">
+                                <path fill="currentColor" d="M12 2l10 6v8l-10 6L2 16V8z" />
+                            </svg>
+                            <input id="roomInput" type="text" placeholder="Room name" value="room1" />
+                        </div>
+                    </div>
 
-    function drawKeyboard() {
-      keyboardRects = [];
-      if (!input_active) return;
+                    <div style="display:flex;flex-direction:column;gap:8px">
+                        <button id="createBtn" class="primary" title="Create room">
+                            <svg width="18" height="18" viewBox="0 0 24 24">
+                                <path fill="currentColor" d="M12 7v10M7 12h10" stroke="currentColor" stroke-width="0" />
+                            </svg>
+                            Create
+                        </button>
+                        <button id="startBtn" class="secondary" style="margin-top:6px">Start</button>
+                    </div>
+                </div>
 
-      const isMobile = /Mobi|Android/i.test(navigator.userAgent);
-      const extraOffset = isMobile ? sy(150) : sy(0);
-      const margin = Math.max(8, sx(8));
-      const kbHeight = Math.min(Math.round(canvas.clientHeight * 0.32), sy(220));
-      const kbTop = canvas.clientHeight - kbHeight - margin - extraOffset;
+                <div style="margin-top:12px;display:flex;align-items:center;justify-content:space-between;gap:12px">
+                    <div>
+                        <div class="muted" style="font-size:13px;margin-bottom:8px">Players</div>
+                        <div class="pc-select" role="tablist" aria-label="player-count">
+                            <button data-count="2" class="pc-btn">2</button>
+                            <button data-count="3" class="pc-btn">3</button>
+                            <button data-count="4" class="pc-btn active">4</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
 
-      // background
-      roundRectLocal(ctx, margin, kbTop, canvas.clientWidth - margin * 2, kbHeight, 12, true, '#1b1b1f');
+        <div class="right">
+            <div class="players-list card">
+                <h3>Players in room</h3>
+                <div id="playersContainer"></div>
+                <div style="display:flex;gap:8px;align-items:center;margin-top:8px">
+                    <button id="leaveBtn" class="small-btn">Leave</button>
+                    <div style="flex:1"></div>
+                    <div class="muted">Max: <b id="maxPlayersLabel">4</b></div>
+                </div>
+            </div>
 
-      // rows of keys
-      const rows = ['qwertyuiop', 'asdfghjkl', 'zxcvbnm'];
-      const rowHeight = Math.round((kbHeight - margin * 3) / 4);
-      for (let r = 0; r < rows.length; r++) {
-        const row = rows[r];
-        const y = kbTop + margin + r * (rowHeight + margin / 2);
-        const keyW = Math.floor((canvas.clientWidth - margin * 4) / row.length) - 6;
-        for (let k = 0; k < row.length; k++) {
-          const key = row[k];
-          const x = margin * 2 + k * (keyW + 6);
-          const w = keyW; const h = rowHeight;
-          roundRectLocal(ctx, x, y, w, h, 6, true, '#2a2a33');
-          ctx.fillStyle = '#fff'; ctx.font = `${Math.max(12, Math.round(16 * scale))}px Arial`;
-          const tw = ctx.measureText(key).width;
-          ctx.fillText(key, x + (w - tw) / 2, y + Math.round((h - parseInt(ctx.font, 10)) / 2));
-          keyboardRects.push({ x: Math.round(x), y: Math.round(y), w: Math.round(w), h: Math.round(h), key });
-        }
-      }
+            <div class="servers-list card">
+                <h3>Servers</h3>
+                <div id="serversContainer"></div>
+                <div style="display:flex;justify-content:center;margin-top:8px">
+                    <button id="refreshServers" class="small-btn">Refresh</button>
+                </div>
+            </div>
+        </div>
+    </div>
 
-      // control row (SPACE, BACK, ENTER)
-      const ctrlY = kbTop + margin + rows.length * (rowHeight + margin / 2);
-      const spaceW = Math.round((canvas.clientWidth - margin * 6) * 0.55);
-      const otherW = Math.round((canvas.clientWidth - margin * 6 - spaceW) / 2);
-      const spaceX = margin * 2;
-      // SPACE
-      roundRectLocal(ctx, spaceX, ctrlY, spaceW, rowHeight, 8, true, '#3c3c46');
-      ctx.fillStyle = '#fff'; ctx.font = `${Math.max(12, Math.round(16 * scale))}px Arial`;
-      const spaceLabel = 'SPACE';
-      ctx.fillText(spaceLabel, spaceX + (spaceW - ctx.measureText(spaceLabel).width) / 2, ctrlY + Math.round((rowHeight - parseInt(ctx.font, 10)) / 2));
-      keyboardRects.push({ x: Math.round(spaceX), y: Math.round(ctrlY), w: Math.round(spaceW), h: Math.round(rowHeight), key: ' ' });
+    <!-- ===================== GAME SCREEN ===================== -->
+    <div id="gameScreen">
+        <div class="game-top-bar" id="gameTopPlayers"></div>
 
-      // BACK
-      const backX = spaceX + spaceW + 6;
-      roundRectLocal(ctx, backX, ctrlY, otherW, rowHeight, 8, true, '#d9534f');
-      ctx.fillStyle = '#fff';
-      const backLabel = 'BACK';
-      ctx.fillText(backLabel, backX + (otherW - ctx.measureText(backLabel).width) / 2, ctrlY + Math.round((rowHeight - parseInt(ctx.font, 10)) / 2));
-      keyboardRects.push({ x: Math.round(backX), y: Math.round(ctrlY), w: Math.round(otherW), h: Math.round(rowHeight), key: 'BACK' });
+        <div class="game-board-wrap">
+            <div class="hex-board">
+                <div class="hex-inner">
+                    <canvas id="gameCanvas"></canvas>
+                </div>
+            </div>
+        </div>
 
-      // ENTER
-      const enterX = backX + otherW + 6;
-      roundRectLocal(ctx, enterX, ctrlY, otherW, rowHeight, 8, true, '#3cc078');
-      ctx.fillStyle = '#000';
-      const enterLabel = 'ENTER';
-      ctx.fillText(enterLabel, enterX + (otherW - ctx.measureText(enterLabel).width) / 2, ctrlY + Math.round((rowHeight - parseInt(ctx.font, 10)) / 2));
-      keyboardRects.push({ x: Math.round(enterX), y: Math.round(ctrlY), w: Math.round(otherW), h: Math.round(rowHeight), key: 'ENTER' });
-    }
+        <div class="game-bottom-bar">
+            <div id="gameBottomPlayer"></div>
+            <button id="endTurnBtn" class="secondary" style="max-height:42px;white-space:nowrap;">
+                End turn
+            </button>
+        </div>
+    </div>
 
-    function handleVirtualKey(key) {
-      if (!input_active) return;
-      if (key === 'BACK') {
-        if (input_active === 'name') input_name = input_name.slice(0, -1);
-        else input_room = input_room.slice(0, -1);
-      } else if (key === 'ENTER') {
-        input_active = null;
-      } else {
-        // letter or space
-        if (input_active === 'name') {
-          if (input_name.length < MAX_INPUT_LENGTH) input_name += key;
-        } else {
-          if (input_room.length < MAX_INPUT_LENGTH) input_room += key;
-        }
-      }
-      drawImmediate();
-    }
+    <!-- WINNER OVERLAY -->
+    <div id="winnerOverlay">
+        <div class="card">
+            <div class="winner-avatar" id="winnerAvatar"></div>
+            <div class="emoji" id="winnerEmoji">🏆</div>
+            <h2 id="winnerTitle">WINNER</h2>
+            <p id="winnerNameLabel">Player 1</p>
+            <p id="winnerSubtitle">Nice triangles!</p>
+            <div id="winnerCountdown">Returning to main menu in 10…</div>
+            <button class="btn" id="winnerSkipBtn">Back to main menu now</button>
+        </div>
+    </div>
 
-    function drawClaimCandidatesAndControls() {
-      claimRects = [];
-      if (!claimMode) return;
+    <!-- virtual keyboard -->
+    <div id="vkb" class="vkb" aria-hidden="true">
+        <div class="row" id="row1"></div>
+        <div class="row" id="row2"></div>
+        <div class="row" id="row3"></div>
+        <div class="row" id="row4"></div>
+        <div class="kbd-ctrl">
+            <div class="key alt" data-key="BACK">BACK</div>
+            <div class="key space" data-key=" ">SPACE</div>
+            <div class="key alt" data-key="ENTER">ENTER</div>
+        </div>
+    </div>
 
-      updateClaimCandidates();
+    <script>
+        const WS_URL = 'wss://frosty-colden.185-234-114-50.plesk.page';
 
-      // draw candidate markers (clickable)
-      for (const c of claimCandidates) {
-        const center = c.center;
-        drawHexagonLocal(ctx, '#2a8bd6', center, Math.max(10, Math.round(12 * scale)), true);
-        const r = Math.round(22 * scale);
-        claimRects.push({ x: Math.round(center[0] - r), y: Math.round(center[1] - r), w: r * 2, h: r * 2, key: c.key, tri: c.points });
-      }
+        const mainMenu = document.getElementById('mainMenu');
+        const lobbyWrap = document.getElementById('lobbyWrap');
+        const gameScreen = document.getElementById('gameScreen');
+        const playPanel = document.getElementById('playPanel');
+        const subPanel = document.getElementById('subPanel');
 
-      // draw End Turn only if it's this player's turn (or local mode turn)
-      const canShowEnd = claimCandidates.length > 0 && ((ws_client.connected && room_chosen !== null && player_index === turn) || (!ws_client.connected));
-      if (!canShowEnd) { endTurnRect = null; return; }
-
-      const w = Math.round(120 * scale), h = Math.round(44 * scale);
-      const endX = canvas.clientWidth - w - Math.max(8, sx(8));   // still near right edge
-      const endY = (canvas.clientHeight - h) / 2;                 // vertically centered
-      roundRectLocal(ctx, endX, endY, w, h, 8, true, '#3cc078');
-      ctx.fillStyle = '#000';
-      ctx.fillText('End Turn', endX + (w - ctx.measureText('End Turn').width) / 2, endY + Math.round((h - parseInt(ctx.font, 10)) / 2));
-      endTurnRect = { x: Math.round(endX), y: Math.round(endY), w: Math.round(w), h: Math.round(h) };
-    }
-
-    function drawFrame(sel_local = null, dragPos = null, temp_centers = null) {
-      ctx.fillStyle = BG; ctx.fillRect(0, 0, canvas.clientWidth, canvas.clientHeight);
-
-      // edges
-      ctx.lineWidth = LINE_THICKNESS; ctx.strokeStyle = LINE_COLOR;
-      for (const [a, b] of con) { drawLineLocal(ctx, pts[a].pos, pts[b].pos, LINE_THICKNESS); }
-
-      // triangles -> small dot center
-      for (const tri of tris) {
-        try {
-          const ptsList = tri.points.map(i => pts[i].pos);
-          const color = PLAYERS_COLORS[tri.owner] || PLAYERS_COLORS[0];
-          const cx = (ptsList[0][0] + ptsList[1][0] + ptsList[2][0]) / 3;
-          const cy = (ptsList[0][1] + ptsList[1][1] + ptsList[2][1]) / 3;
-          drawHexagonLocal(ctx, color, [cx, cy], Math.max(6, Math.round(8 * scale)), true);
-        } catch (e) { }
-      }
-
-      // temp centers
-      if (temp_centers) for (const [center, color] of temp_centers) drawHexagonLocal(ctx, color, center, Math.max(8, Math.round(10 * scale)), true);
-
-      // points
-      for (const p of pts) drawHexagonLocal(ctx, DOT, p.pos, Math.max(4, Math.round(DR)), true);
-
-      // dragging preview
-      if (sel_local !== null && dragPos) drawLineLocal(ctx, pts[sel_local].pos, dragPos, LINE_THICKNESS);
-
-      // player panels
-      drawPlayerPanels();
-
-      // draw claim candidates & controls (if claim mode)
-      drawClaimCandidatesAndControls();
-
-      // winner overlay
-      if (showWinnerOverlay && winnerOverlayData) {
-        ctx.fillStyle = 'rgba(0,0,0,0.86)'; ctx.fillRect(0, 0, canvas.clientWidth, canvas.clientHeight);
-        ctx.font = `bold ${Math.max(18, Math.round(28 * scale))}px Arial`; ctx.fillStyle = '#fff';
-        const winnerNameText = winnerOverlayData.winnerName || (typeof winner === 'number' && playerNames[winner] ? playerNames[winner] : ('P' + ((winner || 0) + 1)));
-        const text = `${winnerOverlayData.emoji || '🏆'}  Победитель: ${winnerNameText}`;
-        const w = ctx.measureText(text).width;
-        ctx.fillText(text, (canvas.clientWidth - w) / 2, canvas.clientHeight / 2 - 12 * scale);
-
-        // countdown text under the winner message (in Russian as requested)
-        if (typeof winnerOverlayCountdown === 'number' && winnerOverlayCountdown > 0) {
-          const countdownText = `В главное меню через ${winnerOverlayCountdown}...`;
-          ctx.font = `${Math.max(14, Math.round(20 * scale))}px Arial`;
-          const cw = ctx.measureText(countdownText).width;
-          ctx.fillText(countdownText, (canvas.clientWidth - cw) / 2, canvas.clientHeight / 2 + 18 * scale);
-        }
-      }
-    }
-
-    function drawImmediate() { drawFrame(sel, drag_pos); }
-
-    function nearScaled(pos) {
-      const hitR = Math.max(18, Math.round((DR + 8) * Math.max(1, 1 / scale)));
-      for (let i = 0; i < pts.length; i++) {
-        const p = pts[i].pos; const dx = p[0] - pos[0], dy = p[1] - pos[1];
-        if (dx * dx + dy * dy <= hitR * hitR) return i;
-      }
-      return null;
-    }
-
-    function sortedPair(a, b) { return a < b ? [a, b] : [b, a]; }
-
-    function line_ok_scaled(a, b) {
-      const p1 = pts[a], p2 = pts[b];
-      const q1 = p1.q, r1 = p1.r, q2 = p2.q, r2 = p2.r;
-      const d = Math.max(Math.abs(q1 - q2), Math.abs(r1 - r2), Math.abs((q1 + r1) - (q2 + r2)));
-      if (d === 0) return [];
-      if (!((q1 - q2 === 0) || (r1 - r2 === 0) || ((q1 + r1) - (q2 + r2) === 0))) return [];
-      const dq = (q2 - q1) / d, dr = (r2 - r1) / d;
-      const path = [];
-      for (let i = 0; i <= d; i++) { const q = Math.round(q1 + dq * i), r = Math.round(r1 + dr * i); const key = `${q},${r}`; if (key in idx) path.push(idx[key]); else return []; }
-      return path;
-    }
-
-    function find_triangles_local_scaled() {
-      const found = [];
-      const edgesSet = new Set(con.map(e => `${e[0]}-${e[1]}`));
-      const n = pts.length;
-      for (let a = 0; a < n; a++) {
-        for (let b = a + 1; b < n; b++) {
-          if (!edgesSet.has(`${a}-${b}`)) continue;
-          for (let c = b + 1; c < n; c++) {
-            if (edgesSet.has(`${b}-${c}`) && edgesSet.has(`${a}-${c}`)) found.push([a, b, c]);
-          }
-        }
-      }
-      return found;
-    }
-
-    function find_triangles_from_edges(edgesList) {
-      const found = [];
-      const edgesSet = new Set(edgesList.map(e => `${e[0]}-${e[1]}`));
-      const n = pts.length;
-      for (let a = 0; a < n; a++) {
-        for (let b = a + 1; b < n; b++) {
-          if (!edgesSet.has(`${a}-${b}`)) continue;
-          for (let c = b + 1; c < n; c++) {
-            if (edgesSet.has(`${b}-${c}`) && edgesSet.has(`${a}-${c}`)) found.push([a, b, c]);
-          }
-        }
-      }
-      return found;
-    }
-
-    function tri_center_scaled(tri_pts) {
-      const xs = tri_pts.map(p => p[0]); const ys = tri_pts.map(p => p[1]);
-      return [Math.floor((xs[0] + xs[1] + xs[2]) / 3), Math.floor((ys[0] + ys[1] + ys[2]) / 3)];
-    }
-
-    function end_if_needed_scaled() {
-      const active_players = [];
-      for (let i = 0; i < 4; i++) if (moves[i] > 0 && score[i] < 15) active_players.push(i);
-      if (active_players.length <= 1) { game_over = true; winner = score.indexOf(Math.max(...score)); return true; }
-      return false;
-    }
-
-    function next_turn_local_scaled() {
-      for (let i = 0; i < 4; i++) { turn = (turn + 1) % 4; if (moves[turn] > 0 && score[turn] < 15) break; }
-    }
-
-    async function animateTriangleCentersScaled(new_tris_list) {
-      animating = true;
-      const temp = [];
-      for (const item of new_tris_list) {
-        temp.push([item.center, item.color]);
-        drawFrame(null, null, temp);
-        await new Promise(r => setTimeout(r, Math.max(80, tri_delay)));
-      }
-      animating = false;
-    }
-
-    ///// WebSocket client (unchanged)
-    class WSClient {
-      constructor(url) { this.url = url; this.ws = null; this.queue = []; this.connected = false; }
-      connect() {
-        return new Promise((res, rej) => {
-          try {
-            this.ws = new WebSocket(this.url);
-            this.ws.addEventListener('open', () => { this.connected = true; console.log('WS open'); res(); });
-            this.ws.addEventListener('message', e => { try { const d = JSON.parse(e.data); this.queue.push(d); console.log('SERVER MSG:', d); } catch (err) { } });
-            this.ws.addEventListener('close', () => { this.connected = false; this.queue.push({ type: 'closed' }); console.log('WS closed'); });
-            this.ws.addEventListener('error', err => { console.error('WS error', err); });
-          } catch (e) { rej(e); }
+        playPanel.addEventListener('click', () => {
+            mainMenu.style.display = 'none';
+            lobbyWrap.style.display = 'flex';
+            gameScreen.style.display = 'none';
+            connectWS();
+            requestRoomsList();
+            window.scrollTo(0, 0);
         });
-      }
-      send(obj) { if (this.ws && this.connected) this.ws.send(JSON.stringify(obj)); }
-      recv_nowait() { return this.queue.length ? this.queue.shift() : null; }
-    }
-    const ws_client = new WSClient(WS_URL);
-    function requestRoomsList() { if (ws_client.connected) ws_client.send({ type: 'list_rooms' }); }
 
-    ///// Claim helpers
-    function triKeyFromPoints(points) { return points.slice().sort((a, b) => a - b).join(','); }
-    function isTriAlreadyClaimed(triPoints) {
-      const sortedKey = triKeyFromPoints(triPoints);
-      return tris.some(t => triKeyFromPoints(t.points) === sortedKey);
-    }
-    function updateClaimCandidates() {
-      const raw = find_triangles_local_scaled(); // returns sorted triples
-      const existingSets = new Set(tris.map(t => triKeyFromPoints(t.points)));
-      claimCandidates = [];
-      for (const t of raw) {
-        const key = triKeyFromPoints(t);
-        if (existingSets.has(key)) continue;
-        const tri_pts = [pts[t[0]].pos, pts[t[1]].pos, pts[t[2]].pos];
-        const center = tri_center_scaled(tri_pts);
-        claimCandidates.push({ points: t.slice(), center, key });
-      }
-    }
+        const backBtn = document.getElementById('backBtn');
+        backBtn.addEventListener('click', () => {
+            lobbyWrap.style.display = 'none';
+            gameScreen.style.display = 'none';
+            mainMenu.style.display = 'flex';
+            window.scrollTo(0, 0);
+        });
 
-    ///// Server messages handler (extended)
-    async function handle_server_messages() {
-      const data = ws_client.recv_nowait(); if (!data) return;
-      const t = data.type;
+        subPanel.addEventListener('click', () => {
+            alert('Open subscription purchase flow');
+        });
 
-      if (t === 'created') {
-        room_chosen = data.room; player_index = data.playerIndex;
-        if (typeof data.playerName !== 'undefined') { playerNames = playerNames.slice(); playerNames[player_index] = data.playerName; }
-        console.log('created', room_chosen, player_index);
-      }
-      else if (t === 'joined') {
-        room_chosen = data.room; player_index = data.playerIndex;
-        if (typeof data.playerName !== 'undefined') { playerNames = playerNames.slice(); playerNames[player_index] = data.playerName; }
-        console.log('joined', room_chosen, player_index);
-      }
-      else if (t === 'lobby') {
-        lobby_players = data.players || [];
-        const maxIdx = Math.max(4, ...(lobby_players.map(p => p.index)));
-        playerNames = Array(maxIdx + 1).fill(null);
-        for (const p of lobby_players) playerNames[p.index] = p.name;
-        const hostIndex = (typeof data.hostIndex !== 'undefined') ? data.hostIndex : 0;
-        is_host = (player_index === hostIndex);
-      }
-      else if (t === 'start') {
-        con = []; tris = [];
-        score = Array.isArray(data.score) ? data.score : score;
-        moves = Array.isArray(data.moves) ? data.moves : moves;
-        turn = (typeof data.turn !== 'undefined') ? data.turn : turn;
-        game_over = false; winner = null; waiting_for_server = false;
-        if (Array.isArray(data.playerNames)) playerNames = data.playerNames.slice();
-        else if (Array.isArray(data.players)) {
-          playerNames = Array(Math.max(4, data.players.length)).fill(null);
-          for (const p of data.players) playerNames[p.index] = p.name;
+        // Lobby elements
+        const nameInput = document.getElementById('nameInput');
+        const roomInput = document.getElementById('roomInput');
+        const createBtn = document.getElementById('createBtn');
+        const startBtn = document.getElementById('startBtn');
+        const leaveBtn = document.getElementById('leaveBtn');
+        const refreshServers = document.getElementById('refreshServers');
+        const playersContainer = document.getElementById('playersContainer');
+        const serversContainer = document.getElementById('serversContainer');
+        const maxPlayersLabel = document.getElementById('maxPlayersLabel');
+        const profileNameEl = document.querySelector('.profile-name');
+
+        /* ===== IndexedDB for name & avatar ===== */
+        let dbPromise = null;
+        function getDB() {
+            if (dbPromise) return dbPromise;
+            dbPromise = new Promise((resolve, reject) => {
+                const request = indexedDB.open('triangoDB', 1);
+                request.onupgradeneeded = (event) => {
+                    const db = event.target.result;
+                    if (!db.objectStoreNames.contains('settings')) {
+                        db.createObjectStore('settings', { keyPath: 'id' });
+                    }
+                };
+                request.onsuccess = e => resolve(e.target.result);
+                request.onerror = e => reject(e.target.error);
+            });
+            return dbPromise;
         }
-        claimMode = false; claimCandidates = [];
-      }
-      else if (t === 'state_update') {
-        try { con = (data.con || []).map(pair => [pair[0], pair[1]]); } catch (e) { con = []; }
-        if (Array.isArray(data.tris)) {
-          tris = data.tris.map(tr => ({ points: tr.points.slice(), owner: tr.owner }));
-        } else {
-          const new_tris = data.new_tris || [];
-          for (const tr of new_tris) {
-            const pts_trip = tr.points.slice();
-            const owner = tr.owner;
-            if (!tris.find(t => arraysEqual(t.points.slice().sort(), pts_trip.slice().sort()))) {
-              tris.push({ points: pts_trip, owner });
+        async function saveToSettings(key, value) {
+            const db = await getDB();
+            return new Promise((resolve, reject) => {
+                const tx = db.transaction('settings', 'readwrite');
+                const store = tx.objectStore('settings');
+                store.put({ id: key, value });
+                tx.oncomplete = () => resolve();
+                tx.onerror = () => reject(tx.error);
+                tx.onabort = () => reject(tx.error);
+            });
+        }
+        async function loadFromSettings(key) {
+            const db = await getDB();
+            return new Promise((resolve, reject) => {
+                const tx = db.transaction('settings', 'readonly');
+                const store = tx.objectStore('settings');
+                const req = store.get(key);
+                req.onsuccess = () => resolve(req.result ? req.result.value : null);
+                req.onerror = () => reject(req.error);
+            });
+        }
+
+        function hasValidName() { return nameInput.value.trim().length > 0; }
+        function updateProfileNameView() {
+            const value = nameInput.value;
+            profileNameEl.textContent = value.trim() || 'Player';
+        }
+
+        nameInput.addEventListener('input', () => {
+            updateProfileNameView();
+            saveToSettings('playerName', nameInput.value).catch(console.warn);
+        });
+
+        (async function initName() {
+            try {
+                const saved = await loadFromSettings('playerName');
+                if (saved !== null && saved !== undefined) {
+                    nameInput.value = saved;
+                } else {
+                    nameInput.value = 'Player';
+                    await saveToSettings('playerName', 'Player');
+                }
+            } catch (e) {
+                nameInput.value = 'Player';
             }
-          }
-        }
-        score = Array.isArray(data.score) ? data.score : score;
-        moves = Array.isArray(data.moves) ? data.moves : moves;
-        const prevTurn = turn;
-        turn = (typeof data.turn !== 'undefined') ? data.turn : turn;
-        game_over = (typeof data.game_over !== 'undefined') ? data.game_over : game_over;
-        winner = (typeof data.winner !== 'undefined') ? data.winner : winner;
-        waiting_for_server = false;
-        if (Array.isArray(data.playerNames)) playerNames = data.playerNames.slice();
-        else if (Array.isArray(data.players)) {
-          playerNames = Array(Math.max(4, data.players.length)).fill(null);
-          for (const p of data.players) playerNames[p.index] = p.name;
-        }
+            updateProfileNameView();
+        })();
 
-        // After authoritative update, recompute candidates
-        updateClaimCandidates();
+        /* ===== WebSocket client ===== */
+        let ws = null;
+        let wsConnected = false;
 
-        // If it was our turn and there are no more candidates -> auto end turn (server mode)
-        if (claimMode && room_chosen !== null && ws_client.connected && player_index === turn && claimCandidates.length === 0) {
-          // send end_turn to server to advance
-          waiting_for_server = true;
-          ws_client.send({ type: 'end_turn', room: room_chosen });
-          // clear local
-          claimMode = false;
-        }
+        let currentRoomId = null;
+        let currentPlayerIndex = null;
+        let isHost = false;
+        let hostIndex = null;
+        let roomMinPlayers = 2;
+        let roomMaxPlayers = 4;
 
-        // If turn moved to someone else -> disable claimMode
-        if (turn !== player_index) {
-          claimMode = false;
-        }
-      }
-      else if (t === 'rooms_list') { servers = Array.isArray(data.rooms) ? data.rooms : []; }
-      else if (t === 'game_over') {
-        // show winner overlay with a 3-second countdown before returning to main menu
-        showWinnerOverlay = true;
-        winnerOverlayData = { winnerName: data.winnerName || null, emoji: data.emoji || '🏆' };
-        if (!winnerOverlayData.winnerName && typeof data.winner === 'number' && playerNames[data.winner]) winnerOverlayData.winnerName = playerNames[data.winner];
+        let lobbyPlayers = [];
+        let roomsList = [];
 
-        // clear any previous timers
-        if (winnerOverlayTimeout) clearTimeout(winnerOverlayTimeout);
-        if (winnerOverlayInterval) clearInterval(winnerOverlayInterval);
+        function connectWS() {
+            if (ws && (ws.readyState === WebSocket.OPEN || ws.readyState === WebSocket.CONNECTING)) return;
+            ws = new WebSocket(WS_URL);
 
-        // start a short countdown (3,2,1) visible to the player
-        winnerOverlayCountdown = 3;
-        winnerOverlayInterval = setInterval(() => {
-          winnerOverlayCountdown = Math.max(0, winnerOverlayCountdown - 1);
-          if (winnerOverlayCountdown === 0) {
-            clearInterval(winnerOverlayInterval); winnerOverlayInterval = null;
-          }
-        }, 1000);
+            ws.onopen = () => {
+                wsConnected = true;
+                console.log('WS connected');
+            };
 
-        // final cleanup after ~3.2s (slightly longer than the visible 3s so the last '1' is readable)
-        winnerOverlayTimeout = setTimeout(() => {
-          showWinnerOverlay = false; winnerOverlayData = null;
-          room_chosen = null; player_index = null; lobby_players = [];
-          con = []; tris = []; score = [0, 0, 0, 0]; moves = [DEFAULT_MOVES, DEFAULT_MOVES, DEFAULT_MOVES, DEFAULT_MOVES];
-          winnerOverlayCountdown = 0;
-          requestRoomsList();
-        }, 3200);
+            ws.onclose = () => {
+                wsConnected = false;
+                console.log('WS closed');
+            };
 
-        // keep waiting_for_server false so UI remains responsive
-        waiting_for_server = false;
-      }
-      else if (t === 'leave_room') {
-        room_chosen = null;
-        player_index = null;
-        is_host = false;
-        lobby_players = [];
-        con = []; tris = [];
-        score = [0, 0, 0, 0];
-        moves = [DEFAULT_MOVES, DEFAULT_MOVES, DEFAULT_MOVES, DEFAULT_MOVES];
-        claimMode = false; claimCandidates = [];
-        waiting_for_server = false;
-        requestRoomsList();
-      }
-      else if (t === 'closed') { console.log('server closed connection'); }
-      else if (t === 'error') { console.warn('server error:', data.message); }
-    }
+            ws.onerror = (e) => {
+                console.error('WS error', e);
+            };
 
-    function arraysEqual(a, b) { if (a.length !== b.length) return false; for (let i = 0; i < a.length; i++) if (a[i] !== b[i]) return false; return true; }
+            ws.onmessage = (event) => {
+                let data;
+                try { data = JSON.parse(event.data); } catch (e) { console.error('bad json', e); return; }
+                console.log('WS msg', data);
 
-    ///// Pointer handling (includes claim UI hits)
-    let drag_pos = null;
+                switch (data.type) {
+                    case 'created':
+                        currentRoomId = data.room;
+                        currentPlayerIndex = data.playerIndex;
+                        isHost = true;
+                        roomMinPlayers = data.minPlayers || 2;
+                        roomMaxPlayers = data.maxPlayers || roomMaxPlayers;
+                        break;
 
-    function canvasPosFromEvent(clientX, clientY) {
-      const rect = canvas.getBoundingClientRect();
-      const x = Math.round((clientX - rect.left));
-      const y = Math.round((clientY - rect.top));
-      return { x, y };
-    }
+                    case 'joined':
+                        currentRoomId = data.room;
+                        currentPlayerIndex = data.playerIndex;
+                        isHost = false;
+                        break;
 
-    function sendClaimTrianglesToServer(triangles) {
-      if (!ws_client.connected || room_chosen === null) { return false; }
-      waiting_for_server = true;
-      ws_client.send({ type: 'claim_triangles', room: room_chosen, triangles });
-      return true;
-    }
+                    case 'lobby':
+                        lobbyPlayers = data.players || [];
+                        hostIndex = data.hostIndex;
+                        isHost = (currentPlayerIndex === hostIndex);
+                        roomMinPlayers = data.minPlayers || roomMinPlayers;
+                        roomMaxPlayers = data.maxPlayers || roomMaxPlayers;
+                        renderPlayers();
+                        break;
 
-    function sendEndTurnToServer() {
-      if (!ws_client.connected || room_chosen === null) { return false; }
-      waiting_for_server = true;
-      ws_client.send({ type: 'end_turn', room: room_chosen });
-      return true;
-    }
+                    case 'rooms_list':
+                        roomsList = data.rooms || [];
+                        renderServers();
+                        break;
 
-    // local fallback: accept triangles (client-side)
-    function localAcceptClaims(triangles) {
-      const edgesSet = new Set(con.map(e => `${e[0]}-${e[1]}`));
-      const existingSets = new Set(tris.map(t => triKeyFromPoints(t.points)));
-      const accepted = [];
-      for (const tri of triangles) {
-        const key = triKeyFromPoints(tri);
-        if (existingSets.has(key)) continue;
-        const a = tri[0], b = tri[1], c = tri[2];
-        const e1 = sortedPair(a, b).join('-'), e2 = sortedPair(b, c).join('-'), e3 = sortedPair(a, c).join('-');
-        if (edgesSet.has(e1) && edgesSet.has(e2) && edgesSet.has(e3)) {
-          tris.push({ points: tri.slice(), owner: turn });
-          accepted.push(tri.slice());
-        }
-      }
-      if (accepted.length) score[turn] += accepted.length;
-      updateClaimCandidates();
-      const new_tris_for_anim = accepted.map(t => ({ points: t, center: tri_center_scaled([pts[t[0]].pos, pts[t[1]].pos, pts[t[2]].pos]), color: PLAYERS_COLORS[turn] }));
-      if (new_tris_for_anim.length) animateTriangleCentersScaled(new_tris_for_anim);
-      // If no more candidates after claiming -> advance turn locally
-      if (claimCandidates.length === 0) {
-        claimMode = false;
-        next_turn_local_scaled();
-      }
-    }
+                    case 'start':
+                        handleGameStart(data);
+                        break;
 
-    async function handlePointerDown(clientX, clientY) {
-      const pos = canvasPosFromEvent(clientX, clientY);
-      const mx = pos.x, my = pos.y;
+                    case 'state_update':
+                        handleStateUpdate(data);
+                        break;
 
-      // Lobby input handling...
-      if (room_chosen === null && con.length === 0 && tris.length === 0) {
-        // first — keyboard hit checks (if keyboard visible)
-        if (input_active && keyboardRects.length) {
-          for (const r of keyboardRects) {
-            if (mx >= r.x && mx <= r.x + r.w && my >= r.y && my <= r.y + r.h) {
-              // handle virtual key
-              handleVirtualKey(r.key);
-              return;
-            }
-          }
+                    case 'game_over':
+                        handleGameOver(data);
+                        break;
+
+                    case 'leave_room': {
+                        const reason = data.reason || 'server';
+
+                        // если игра завершилась нормально — НИКАКОГО alert
+                        if (reason !== 'game_over') {
+                            alert('You left the room (' + reason + ')');
+                            resetRoomClientState();
+                            showMainMenu();
+                        } else {
+                            // при нормальном конце игры:
+                            // просто чистим состояние, а возврат в меню делает winner-overlay по таймеру
+                            resetRoomClientState();
+                            // showMainMenu() тут не вызываем — его вызовет оверлей после отсчёта
+                        }
+
+                        break;
+                    }
+
+                    case 'error':
+                        alert('Error: ' + (data.message || 'unknown'));
+                        break;
+                }
+            };
         }
 
-        const nameBox = sRect(50, 120, 300, 40);
-        if (mx >= nameBox.x && mx <= nameBox.x + nameBox.w && my >= nameBox.y && my <= nameBox.y + nameBox.h) { input_active = 'name'; drawImmediate(); return; }
-        const roomBox = sRect(50, 180, 300, 40);
-        if (mx >= roomBox.x && mx <= roomBox.x + roomBox.w && my >= roomBox.y && my <= roomBox.y + roomBox.h) { input_active = 'room'; drawImmediate(); return; }
-
-        const pcRegion = sRect(520, 120, 66 * 3 + 6 * 2, 36);
-        if (mx >= pcRegion.x && mx <= pcRegion.x + pcRegion.w && my >= pcRegion.y && my <= pcRegion.y + pcRegion.h) {
-          const relative = mx - pcRegion.x;
-          const idxBtn = Math.floor(relative / Math.round(66 * scale));
-          const mapping = [2, 3, 4];
-          selectedPlayerCount = mapping[Math.max(0, Math.min(2, idxBtn))];
-          drawImmediate(); return;
-        }
-        const createBtn = sRect(380, 120, 140, 40);
-        if (mx >= createBtn.x && mx <= createBtn.x + createBtn.w && my >= createBtn.y && my <= createBtn.y + createBtn.h) {
-          if (!ws_client.connected) { try { await ws_client.connect(); } catch (e) { console.error('connect failed', e); return; } }
-          ws_client.send({ type: 'create', room: input_room, name: input_name, playerCount: selectedPlayerCount });
-          return;
-        }
-        const joinBtn = sRect(380, 180, 140, 40);
-        if (mx >= joinBtn.x && mx <= joinBtn.x + joinBtn.w && my >= joinBtn.y && my <= joinBtn.y + joinBtn.h) {
-          if (!ws_client.connected) { try { await ws_client.connect(); } catch (e) { console.error('connect failed', e); return; } }
-          ws_client.send({ type: 'join', room: input_room, name: input_name });
-          return;
-        }
-        const startBtn = sRect(800, 120, 140, 40);
-        if (is_host && room_chosen && mx >= startBtn.x && mx <= startBtn.x + startBtn.w && my >= startBtn.y && my <= startBtn.y + startBtn.h) {
-          ws_client.send({ type: 'start', room: room_chosen });
-          return;
-        }
-        for (let i = 0; i < serversButtonRects.length; i++) {
-          const r = serversButtonRects[i];
-          if (mx >= r.x && mx <= r.x + r.w && my >= r.y && my <= r.y + r.h) {
-            const roomId = servers[i].id;
-            if (!ws_client.connected) { try { await ws_client.connect(); } catch (e) { console.error('connect failed', e); return; } }
-            ws_client.send({ type: 'join', room: roomId, name: input_name });
-            return;
-          }
-        }
-        return;
-      }
-
-      // Gameplay: first check claim UI overlaps (if in claimMode)
-      if (claimMode) {
-        // check candidate hits -> immediate claim when clicked
-        for (const r of claimRects) {
-          if (mx >= r.x && mx <= r.x + r.w && my >= r.y && my <= r.y + r.h) {
-            // immediate claim of this single triangle
-            const triangles = [r.tri.slice()];
-            if (ws_client.connected && room_chosen !== null) {
-              waiting_for_server = true;
-              ws_client.send({ type: 'claim_triangles', room: room_chosen, triangles });
+        function sendWS(obj) {
+            const str = JSON.stringify(obj);
+            if (ws && ws.readyState === WebSocket.OPEN) {
+                ws.send(str);
             } else {
-              localAcceptClaims(triangles);
+                connectWS();
+                ws.addEventListener('open', () => ws.send(str), { once: true });
             }
+        }
+
+        function requestRoomsList() {
+            if (!wsConnected && (!ws || ws.readyState !== WebSocket.CONNECTING)) connectWS();
+            sendWS({ type: 'list_rooms' });
+        }
+
+        function resetRoomClientState() {
+            currentRoomId = null;
+            currentPlayerIndex = null;
+            lobbyPlayers = [];
+            roomsList = [];
+            isHost = false;
+            hostIndex = null;
+            renderPlayers();
+            renderServers();
+        }
+
+        function showMainMenu() {
+            gameScreen.style.display = 'none';
+            lobbyWrap.style.display = 'none';
+            mainMenu.style.display = 'flex';
+        }
+
+        /* ===== Lobby rendering ===== */
+        function renderPlayers() {
+            playersContainer.innerHTML = '';
+            if (!lobbyPlayers.length) {
+                playersContainer.innerHTML = '<div class="muted">No players in room</div>';
+            } else {
+                lobbyPlayers.forEach(p => {
+                    const row = document.createElement('div');
+                    row.className = 'player-row';
+
+                    const avatarDiv = document.createElement('div');
+                    avatarDiv.className = 'avatar';
+                    if (p.avatar) {
+                        avatarDiv.style.backgroundImage = `url(${p.avatar})`;
+                        avatarDiv.textContent = '';
+                    } else {
+                        avatarDiv.textContent = (p.name || '?').charAt(0).toUpperCase();
+                    }
+
+                    const meta = document.createElement('div');
+                    meta.className = 'player-meta';
+                    meta.innerHTML = `
+          <b>${p.name}</b>
+          <span class="muted">Player ${p.index + 1}${p.isHost ? ' • host' : ''}</span>
+        `;
+
+                    const actions = document.createElement('div');
+                    actions.className = 'player-actions';
+                    const btn = document.createElement('button');
+                    btn.className = 'small-btn';
+                    btn.textContent = 'Msg';
+                    btn.onclick = () => console.log('message', p.index);
+                    actions.appendChild(btn);
+
+                    row.appendChild(avatarDiv);
+                    row.appendChild(meta);
+                    row.appendChild(actions);
+                    playersContainer.appendChild(row);
+                });
+            }
+            maxPlayersLabel.textContent = roomMaxPlayers || '4';
+
+            const canStart = isHost && lobbyPlayers.length >= roomMinPlayers && lobbyPlayers.length <= roomMaxPlayers;
+            startBtn.disabled = !canStart;
+            startBtn.style.opacity = canStart ? '1' : '0.5';
+            startBtn.style.cursor = canStart ? 'pointer' : 'default';
+        }
+
+        function renderServers() {
+            serversContainer.innerHTML = '';
+            if (!roomsList.length) {
+                serversContainer.innerHTML = '<div class="muted">No rooms yet</div>';
+                return;
+            }
+            roomsList.forEach(s => {
+                const el = document.createElement('div');
+                el.className = 'server-row';
+                const full = s.players >= s.maxPlayers;
+                el.innerHTML = `
+        <div style="flex:1">
+          <div style="font-weight:700">${s.id} ${s.started ? '<span style="color:#ffcc66;font-weight:600;margin-left:8px">[started]</span>' : ''}</div>
+          <div class="muted">Players: ${s.players}/${s.maxPlayers}</div>
+        </div>
+        <div style="margin-left:12px">
+          <button class="join-server">${(!s.started && !full) ? 'Join' : 'Watch'}</button>
+        </div>
+      `;
+                el.querySelector('.join-server').addEventListener('click', () => {
+                    if (!hasValidName()) {
+                        alert('Введите никнейм, чтобы присоединиться к игре');
+                        nameInput.focus(); return;
+                    }
+                    sendWS({
+                        type: 'join',
+                        room: s.id,
+                        name: nameInput.value.trim() || 'Player',
+                        avatar: localAvatarDataUrl || null
+                    });
+                });
+                serversContainer.appendChild(el);
+            });
+        }
+
+        document.querySelectorAll('.pc-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.pc-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+            });
+        });
+
+        createBtn.addEventListener('click', () => {
+            if (!hasValidName()) {
+                alert('Введите никнейм, чтобы создать лобби');
+                nameInput.focus(); return;
+            }
+            const pcBtn = document.querySelector('.pc-btn.active');
+            const playerCount = pcBtn ? parseInt(pcBtn.dataset.count, 10) : 4;
+            roomMaxPlayers = playerCount;
+            roomMinPlayers = 2;
+            const roomId = roomInput.value.trim() || 'room';
+            sendWS({
+                type: 'create',
+                room: roomId,
+                name: nameInput.value.trim() || 'Player',
+                minPlayers: roomMinPlayers,
+                maxPlayers: roomMaxPlayers,
+                avatar: localAvatarDataUrl || null
+            });
+        });
+
+        startBtn.addEventListener('click', () => {
+            if (!currentRoomId) {
+                alert('Вы ещё не в комнате'); return;
+            }
+            if (!isHost) {
+                alert('Только хост может запустить игру'); return;
+            }
+            sendWS({ type: 'start', room: currentRoomId });
+        });
+
+        leaveBtn.addEventListener('click', () => {
+            if (ws) {
+                ws.close(); // сервер сам удалит из комнаты
+            }
+            resetRoomClientState();
+        });
+
+        refreshServers.addEventListener('click', () => {
+            requestRoomsList();
+        });
+
+        /* ===== Virtual keyboard ===== */
+        const vkb = document.getElementById('vkb');
+        const rows = ['123456789', 'qwertyuiop', 'asdfghjkl', 'zxcvbnm'];
+        function buildKeyboard() {
+            document.getElementById('row1').innerHTML = rows[0].split('').map(k => `<div class="key" data-key="${k}">${k}</div>`).join('');
+            document.getElementById('row2').innerHTML = rows[1].split('').map(k => `<div class="key" data-key="${k}">${k}</div>`).join('');
+            document.getElementById('row3').innerHTML = rows[2].split('').map(k => `<div class="key" data-key="${k}">${k}</div>`).join('');
+            document.getElementById('row4').innerHTML = rows[3].split('').map(k => `<div class="key" data-key="${k}">${k}</div>`).join('');
+            document.querySelectorAll('.key').forEach(el => {
+                el.addEventListener('click', () => {
+                    const key = el.dataset.key;
+                    handleVirtualKey(key);
+                });
+            });
+        }
+        buildKeyboard();
+
+        let activeField = null;
+        function showKeyboard(show, field = null) {
+            if (show) { vkb.classList.add('show'); activeField = field; vkb.setAttribute('aria-hidden', 'false'); }
+            else { vkb.classList.remove('show'); activeField = null; vkb.setAttribute('aria-hidden', 'true'); }
+        }
+
+        function handleVirtualKey(key) {
+            if (!activeField) return;
+            if (key === 'BACK') {
+                if (activeField === 'name') {
+                    nameInput.value = nameInput.value.slice(0, -1);
+                    nameInput.dispatchEvent(new Event('input'));
+                } else {
+                    roomInput.value = roomInput.value.slice(0, -1);
+                }
+                return;
+            }
+            if (key === 'ENTER') { showKeyboard(false, null); return; }
+            if (key === ' ') {
+                if (activeField === 'name') {
+                    nameInput.value += ' ';
+                    nameInput.dispatchEvent(new Event('input'));
+                } else {
+                    roomInput.value += ' ';
+                }
+                return;
+            }
+            if (activeField === 'name') {
+                if (nameInput.value.length < 20) {
+                    nameInput.value += key;
+                    nameInput.dispatchEvent(new Event('input'));
+                }
+            } else {
+                if (roomInput.value.length < 20) roomInput.value += key;
+            }
+        }
+
+        nameInput.addEventListener('focus', () => showKeyboard(true, 'name'));
+        roomInput.addEventListener('focus', () => showKeyboard(true, 'room'));
+
+        document.addEventListener('click', e => {
+            if (!e.target.closest('.field') && !e.target.closest('.vkb')) {
+                showKeyboard(false, null);
+                nameInput.blur(); roomInput.blur();
+            }
+        });
+
+        nameInput.addEventListener('touchstart', e => { e.preventDefault(); nameInput.blur(); showKeyboard(true, 'name'); });
+        roomInput.addEventListener('touchstart', e => { e.preventDefault(); roomInput.blur(); showKeyboard(true, 'room'); });
+
+        /* ===== Profile avatar + IndexedDB ===== */
+        const profilePill = document.getElementById('profilePill');
+        const profileAvatar = document.getElementById('profileAvatar');
+        const avatarInput = document.getElementById('avatarInput');
+        const avatarError = document.getElementById('avatarError');
+        const uploadAvatarLabel = document.getElementById('uploadAvatarLabel');
+
+        let localAvatarDataUrl = null;
+
+        profilePill.addEventListener('click', e => {
+            if (e.target === avatarInput) return;
+            profilePill.classList.toggle('open');
+        });
+        uploadAvatarLabel.addEventListener('click', e => e.stopPropagation());
+
+        const MAX_SIZE = 1024 * 1024;
+        avatarInput.addEventListener('change', e => {
+            const file = e.target.files[0];
+            avatarError.textContent = '';
+            if (!file) return;
+            if (file.size > MAX_SIZE) {
+                avatarError.textContent = 'Файл больше 1 мб';
+                avatarInput.value = '';
+                return;
+            }
+            const reader = new FileReader();
+            reader.onload = async () => {
+                const dataUrl = reader.result;
+                try {
+                    await saveToSettings('avatar', dataUrl);
+                    applyAvatar(dataUrl);
+                } catch (err) { console.error(err); }
+            };
+            reader.readAsDataURL(file);
+        });
+
+        function applyAvatar(dataUrl) {
+            localAvatarDataUrl = dataUrl;
+            profileAvatar.style.backgroundImage = `url(${dataUrl})`;
+            profileAvatar.style.backgroundSize = 'cover';
+            profileAvatar.style.backgroundPosition = 'center';
+            profileAvatar.style.backgroundRepeat = 'no-repeat';
+        }
+
+        (async () => {
+            try {
+                const avatarData = await loadFromSettings('avatar');
+                if (avatarData) applyAvatar(avatarData);
+            } catch (e) { console.error(e); }
+        })();
+
+        /* ===== Game UI + Hex Board (canvas) ===== */
+        const gameTopPlayers = document.getElementById('gameTopPlayers');
+        const gameBottomPlayer = document.getElementById('gameBottomPlayer');
+        const gameCanvas = document.getElementById('gameCanvas');
+        const endTurnBtn = document.getElementById('endTurnBtn');
+        const gctx = gameCanvas.getContext('2d', { alpha: false });
+
+        // winner overlay
+        const winnerOverlay = document.getElementById('winnerOverlay');
+        const winnerEmojiEl = document.getElementById('winnerEmoji');
+        const winnerTitleEl = document.getElementById('winnerTitle');
+        const winnerNameLabel = document.getElementById('winnerNameLabel');
+        const winnerSubtitleEl = document.getElementById('winnerSubtitle');
+        const winnerCountdownEl = document.getElementById('winnerCountdown');
+        const winnerSkipBtn = document.getElementById('winnerSkipBtn');
+        const winnerAvatarEl = document.getElementById('winnerAvatar');
+
+        let winnerCountdownTimer = null;
+        let winnerCountdownInterval = null;
+        let winnerCountdownValue = 10;
+
+        const LOGICAL_BASE_W = 1000;
+        const LOGICAL_BASE_H = 700;
+        const BASE_SP = 60;
+        const BASE_DR = 10;
+
+        const R = 4;
+        const STEP_POINTS = 4;
+        const DEFAULT_MOVES = 15;
+
+        const BG = '#020617';
+        const DOT = '#e5e7eb';
+        const LINE_COLOR = '#f97316';
+        const PLAYERS_COLORS = ['#8b5cf6', '#f97316', '#22c55e', '#38bdf8'];
+
+        let gWIDTH = 0, gHEIGHT = 0, gScale = 1;
+        let SP = BASE_SP;
+        let DR = BASE_DR;
+        let LINE_THICKNESS = 3;
+
+        const pts = [];
+        const idx = {};
+
+        let con = [];
+        let tris = [];
+        let sel = null;
+        let drag_pos = null;
+
+        let turn = 0;
+        let moves = [DEFAULT_MOVES, DEFAULT_MOVES, DEFAULT_MOVES, DEFAULT_MOVES];
+        let score = [0, 0, 0, 0];
+        let game_over = false;
+        let winner = null;
+
+        let playerNames = [];
+        let playerAvatars = [];
+
+        let claimMode = false;
+        let claimCandidates = [];
+        let claimRects = [];
+
+        let animating = false;
+        let waiting_for_server = false;
+        let tri_delay = 220;
+        let gameStarted = false;
+
+        function setupCanvasSize() {
+            const DPR = window.devicePixelRatio || 1;
+            const rect = gameCanvas.getBoundingClientRect();
+            const cssW = rect.width || window.innerWidth;
+            const cssH = rect.height || (window.innerHeight * 0.6);
+
+            gameCanvas.style.width = cssW + 'px';
+            gameCanvas.style.height = cssH + 'px';
+            gameCanvas.width = Math.round(cssW * DPR);
+            gameCanvas.height = Math.round(cssH * DPR);
+
+            gWIDTH = cssW;
+            gHEIGHT = cssH;
+            gScale = Math.min(gWIDTH / LOGICAL_BASE_W, gHEIGHT / LOGICAL_BASE_H);
+
+            gctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+
+            SP = Math.max(22, Math.round(BASE_SP * gScale));
+            DR = Math.max(5, Math.round(BASE_DR * gScale));
+            LINE_THICKNESS = Math.max(2, Math.round(4 * gScale));
+
+            buildGrid();
             drawImmediate();
-            return;
-          }
         }
-        // check end turn button
-        if (endTurnRect && mx >= endTurnRect.x && mx <= endTurnRect.x + endTurnRect.w && my >= endTurnRect.y && my <= endTurnRect.y + endTurnRect.h) {
-          if (ws_client.connected && room_chosen !== null) {
-            waiting_for_server = true;
-            ws_client.send({ type: 'end_turn', room: room_chosen });
-          } else {
-            claimMode = false;
-            next_turn_local_scaled();
-          }
-          drawImmediate();
-          return;
-        }
-        // clicking elsewhere while in claimMode does nothing (player must claim or end turn)
-        return;
-      }
 
-      // normal gameplay line drawing (when not in claimMode)
-      if (animating || waiting_for_server) return;
-      if (game_over) return;
-      if (score[turn] >= 15 || moves[turn] <= 0) { next_turn_local_scaled(); return; }
-
-      // IMPORTANT: prevent making move when connected and not your player index
-      if (ws_client.connected && room_chosen !== null && player_index !== null && player_index !== undefined && player_index !== turn) {
-        // not your turn — ignore taps for line creation
-        return;
-      }
-
-      const i = nearScaled([mx, my]);
-      if (i !== null) {
-        if (sel === null) { sel = i; drag_pos = [mx, my]; drawImmediate(); return; }
-        else if (i !== sel) {
-          const path = line_ok_scaled(sel, i);
-          if (path.length === STEP_POINTS) {
-            let made_line = false;
-            const newEdges = [];
-            for (let k = 0; k < path.length - 1; k++) { const a = path[k], b = path[k + 1]; const edge = sortedPair(a, b); if (!con.find(e => e[0] === edge[0] && e[1] === edge[1])) { made_line = true; newEdges.push(edge); } }
-            if (made_line) {
-              if (ws_client.connected && room_chosen !== null) {
-                waiting_for_server = true;
-                // optimistic: add edges locally so UI shows them and compute if triangles appear
-                for (const e of newEdges) con.push(e);
-                // detect triangles on optimistic con
-                const hypotheticalEdges = con.slice();
-                const raw = find_triangles_from_edges(hypotheticalEdges);
-                const existingSets = new Set(tris.map(t => triKeyFromPoints(t.points)));
-                const newCandidates = raw.filter(t => !existingSets.has(triKeyFromPoints(t)));
-                // send move
-                ws_client.send({ type: 'make_move', room: room_chosen, path: path });
-
-                if (newCandidates.length === 0) {
-                  // no triangles -> auto end turn
-                  ws_client.send({ type: 'end_turn', room: room_chosen });
-                  claimMode = false;
-                } else {
-                  // triangles exist -> enable claim mode (only this player can claim)
-                  claimMode = true;
-                  updateClaimCandidates();
+        function buildGrid() {
+            pts.length = 0;
+            for (let q = -R + 1; q < R; q++) {
+                const r1 = Math.max(-R + 1, -q - R + 1);
+                const r2 = Math.min(R - 1, -q + R - 1);
+                for (let rr = r1; rr <= r2; rr++) {
+                    const pos = toxy(q, rr);
+                    idx[`${q},${rr}`] = pts.length;
+                    pts.push({ pos, q, r: rr });
                 }
-              } else {
-                // local: add edges, enable claimMode only if triangles appear
-                for (let k = 0; k < path.length - 1; k++) { const a = path[k], b = path[k + 1]; const edge = sortedPair(a, b); if (!con.find(e => e[0] === edge[0] && e[1] === edge[1])) con.push(edge); }
-                updateClaimCandidates();
-                if (claimCandidates.length === 0) {
-                  // no triangles locally -> auto advance
-                  next_turn_local_scaled();
-                } else {
-                  claimMode = true;
-                }
-              }
             }
-          }
-          sel = null; drag_pos = null; drawImmediate();
         }
-      }
-    }
 
-    function handlePointerMove(clientX, clientY) {
-      const pos = canvasPosFromEvent(clientX, clientY);
-      const mx = pos.x, my = pos.y;
-      if (sel !== null && !animating && !waiting_for_server) { drag_pos = [mx, my]; drawImmediate(); }
-    }
+        function toxy(q, r) {
+            const x = SP * (1.5 * q);
+            const y = SP * (Math.sqrt(3) * (r + q / 2));
+            const cssW = gameCanvas.clientWidth || gWIDTH;
+            const cssH = gameCanvas.clientHeight || gHEIGHT;
+            return [
+                Math.round(x + cssW / 2),
+                Math.round(y + cssH / 2)
+            ];
+        }
 
-    canvas.addEventListener('mousedown', (ev) => { handlePointerDown(ev.clientX, ev.clientY); });
-    canvas.addEventListener('mousemove', (ev) => { handlePointerMove(ev.clientX, ev.clientY); });
+        function drawHexagonLocal(color, center, radius, fill = true, width = 0) {
+            gctx.beginPath();
+            for (let i = 0; i < 6; i++) {
+                const ang = (Math.PI / 180) * (60 * i - 30);
+                const x = center[0] + radius * Math.cos(ang);
+                const y = center[1] + radius * Math.sin(ang);
+                if (i === 0) gctx.moveTo(x, y); else gctx.lineTo(x, y);
+            }
+            gctx.closePath();
+            if (fill) {
+                gctx.fillStyle = color;
+                gctx.fill();
+            }
+            if (width > 0) {
+                gctx.lineWidth = width;
+                gctx.strokeStyle = LINE_COLOR;
+                gctx.stroke();
+            }
+        }
 
-    canvas.addEventListener('touchstart', (ev) => {
-      ev.preventDefault();
-      const t = ev.touches[0];
-      if (!t) return;
-      handlePointerDown(t.clientX, t.clientY);
-    });
+        function drawLineLocal(a, b, thickness = LINE_THICKNESS) {
+            gctx.beginPath();
+            gctx.moveTo(a[0], a[1]);
+            gctx.lineTo(b[0], b[1]);
+            gctx.lineWidth = thickness;
+            gctx.strokeStyle = LINE_COLOR;
+            gctx.lineCap = 'round';
+            gctx.stroke();
+        }
 
-    // Dragging preview
-    canvas.addEventListener('touchmove', (ev) => {
-      ev.preventDefault();
-      const t = ev.touches[0];
-      if (!t) return;
-      handlePointerMove(t.clientX, t.clientY);
-    });
+        function nearScaled(pos) {
+            const hitR = Math.max(18, Math.round((DR + 8) * Math.max(1, 1 / gScale)));
+            for (let i = 0; i < pts.length; i++) {
+                const p = pts[i].pos;
+                const dx = p[0] - pos[0];
+                const dy = p[1] - pos[1];
+                if (dx * dx + dy * dy <= hitR * hitR) return i;
+            }
+            return null;
+        }
 
-    // Finish dragging
-    canvas.addEventListener('touchend', (ev) => {
-      const t = ev.changedTouches[0];
-      if (!t) return;
+        function sortedPair(a, b) { return a < b ? [a, b] : [b, a]; }
 
-      // Try to place the line at the touch end point
-      handlePointerDown(t.clientX, t.clientY);
+        function line_ok_scaled(a, b) {
+            const p1 = pts[a], p2 = pts[b];
+            const q1 = p1.q, r1 = p1.r;
+            const q2 = p2.q, r2 = p2.r;
+            const d = Math.max(
+                Math.abs(q1 - q2),
+                Math.abs(r1 - r2),
+                Math.abs((q1 + r1) - (q2 + r2))
+            );
+            if (d === 0) return [];
+            if (!(
+                (q1 - q2 === 0) ||
+                (r1 - r2 === 0) ||
+                ((q1 + r1) - (q2 + r2) === 0)
+            )) return [];
+            const dq = (q2 - q1) / d;
+            const dr = (r2 - r1) / d;
+            const path = [];
+            for (let i = 0; i <= d; i++) {
+                const q = Math.round(q1 + dq * i);
+                const r = Math.round(r1 + dr * i);
+                const key = `${q},${r}`;
+                if (key in idx) path.push(idx[key]);
+                else return [];
+            }
+            return path;
+        }
 
-      // Clear drag preview and selection
-      sel = null;
-      drag_pos = null;
-      drawImmediate();
-    });
+        function find_triangles_local_scaled() {
+            const found = [];
+            const edgesSet = new Set(con.map(e => `${e[0]}-${e[1]}`));
+            const n = pts.length;
+            for (let a = 0; a < n; a++) {
+                for (let b = a + 1; b < n; b++) {
+                    if (!edgesSet.has(`${a}-${b}`)) continue;
+                    for (let c = b + 1; c < n; c++) {
+                        if (edgesSet.has(`${b}-${c}`) && edgesSet.has(`${a}-${c}`)) {
+                            found.push([a, b, c]);
+                        }
+                    }
+                }
+            }
+            return found;
+        }
 
-    window.addEventListener('keydown', (ev) => {
-      if (room_chosen === null && con.length === 0 && tris.length === 0 && input_active) {
-        if (ev.key === 'Backspace') {
-          if (input_active === 'name') input_name = input_name.slice(0, -1);
-          else input_room = input_room.slice(0, -1);
-        } else if (ev.key === 'Enter') input_active = null;
-        else if (ev.key.length === 1) { if (input_active === 'name') input_name += ev.key; else input_room += ev.key; }
-        drawImmediate();
-      }
-    });
+        function find_triangles_from_edges(edgesList) {
+            const found = [];
+            const edgesSet = new Set(edgesList.map(e => `${e[0]}-${e[1]}`));
+            const n = pts.length;
+            for (let a = 0; a < n; a++) {
+                for (let b = a + 1; b < n; b++) {
+                    if (!edgesSet.has(`${a}-${b}`)) continue;
+                    for (let c = b + 1; c < n; c++) {
+                        if (edgesSet.has(`${b}-${c}`) && edgesSet.has(`${a}-${c}`)) {
+                            found.push([a, b, c]);
+                        }
+                    }
+                }
+            }
+            return found;
+        }
 
-    function drawLobbyUI() {
-      ctx.fillStyle = '#1e1e24'; ctx.fillRect(0, 0, canvas.clientWidth, canvas.clientHeight);
-      ctx.font = `${Math.max(18, Math.round(36 * scale))}px Arial`; ctx.fillStyle = '#fff';
-      const title = 'Lobby'; const titleW = ctx.measureText(title).width; ctx.fillText(title, (canvas.clientWidth - titleW) / 2, sy(20));
+        function tri_center_scaled(tri_pts) {
+            const xs = tri_pts.map(p => p[0]);
+            const ys = tri_pts.map(p => p[1]);
+            return [
+                Math.floor((xs[0] + xs[1] + xs[2]) / 3),
+                Math.floor((ys[0] + ys[1] + ys[2]) / 3)
+            ];
+        }
 
-      const nameBox = sRect(50, 120, 300, 40);
-      roundRectLocal(ctx, nameBox.x, nameBox.y, nameBox.w, nameBox.h, 6, true, '#32323c');
-      ctx.lineWidth = Math.max(1, Math.round(2 * scale)); ctx.strokeStyle = '#c8c8c8'; roundRectLocal(ctx, nameBox.x, nameBox.y, nameBox.w, nameBox.h, 6, false);
-      ctx.fillStyle = '#fff'; ctx.font = FONT; ctx.fillText('Name: ' + input_name, nameBox.x + sx(10), nameBox.y + sy(8));
+        function triKeyFromPoints(points) {
+            return points.slice().sort((a, b) => a - b).join(',');
+        }
 
-      const roomBox = sRect(50, 180, 300, 40);
-      roundRectLocal(ctx, roomBox.x, roomBox.y, roomBox.w, roomBox.h, 6, true, '#32323c'); roundRectLocal(ctx, roomBox.x, roomBox.y, roomBox.w, roomBox.h, 6, false);
-      ctx.fillStyle = '#fff'; ctx.fillText('Room: ' + input_room, roomBox.x + sx(10), roomBox.y + sy(8));
+        function arraysEqual(a, b) {
+            if (a.length !== b.length) return false;
+            for (let i = 0; i < a.length; i++) if (a[i] !== b[i]) return false;
+            return true;
+        }
 
-      const counts = [2, 3, 4];
-      for (let i = 0; i < counts.length; i++) {
-        const x = sx(520) + i * Math.round((66 + 6) * scale);
-        const y = sy(120);
-        const wRect = Math.round(66 * scale), hRect = Math.round(36 * scale);
-        roundRectLocal(ctx, x, y, wRect, hRect, 6, true, (counts[i] === selectedPlayerCount) ? '#3cc078' : '#444');
-        ctx.fillStyle = (counts[i] === selectedPlayerCount) ? '#000' : '#fff';
-        ctx.font = FONT;
-        ctx.fillText(String(counts[i]), x + wRect / 2 - ctx.measureText(String(counts[i])).width / 2, y + Math.round(6 * scale));
-      }
+        function updateClaimCandidates() {
+            const raw = find_triangles_local_scaled();
+            const existing = new Set(tris.map(t => triKeyFromPoints(t.points)));
+            claimCandidates = [];
+            for (const t of raw) {
+                const key = triKeyFromPoints(t);
+                if (existing.has(key)) continue;
+                const tri_pts = [pts[t[0]].pos, pts[t[1]].pos, pts[t[2]].pos];
+                const center = tri_center_scaled(tri_pts);
+                claimCandidates.push({ points: t.slice(), center, key });
+            }
+        }
 
-      const createBtn = sRect(380, 120, 140, 40);
-      const joinBtn = sRect(380, 180, 140, 40);
-      roundRectLocal(ctx, createBtn.x, createBtn.y, createBtn.w, createBtn.h, 6, true, '#4682b4');
-      roundRectLocal(ctx, joinBtn.x, joinBtn.y, joinBtn.w, joinBtn.h, 6, true, '#4682b4');
-      ctx.fillStyle = '#fff'; ctx.font = FONT; ctx.fillText('Create', createBtn.x + sx(25), createBtn.y + sy(8));
-      ctx.fillText('Join', joinBtn.x + sx(35), joinBtn.y + sy(8));
+        async function animateTriangleCentersScaled(new_tris_list) {
+            animating = true;
+            const temp = [];
+            for (const item of new_tris_list) {
+                temp.push([item.center, item.color]);
+                drawFrame(sel, drag_pos, temp);
+                await new Promise(r => setTimeout(r, Math.max(80, tri_delay)));
+            }
+            animating = false;
+        }
 
-      ctx.fillStyle = '#fff'; ctx.fillText('Players in room:', sx(50), sy(250));
-      let y = sy(290); ctx.font = FONT;
-      for (const p of lobby_players) { const flag = p.isHost ? ' (host)' : ''; ctx.fillStyle = '#e6e6e6'; ctx.fillText(`${p.index + 1}. ${p.name}${flag}`, sx(60), y); y += sy(30); }
+        function drawFrame(sel_local = null, dragPos = null, temp_centers = null) {
+            if (!gctx || !gameCanvas.width) return;
 
-      if (is_host && room_chosen) { roundRectLocal(ctx, sx(800), sy(120), sx(140), sy(40), 6, true, '#3cc078'); ctx.fillStyle = '#000'; ctx.fillText('Start', sx(830), sy(128)); }
+            gctx.fillStyle = BG;
+            gctx.fillRect(0, 0, gameCanvas.clientWidth, gameCanvas.clientHeight);
 
-      ctx.fillStyle = '#fff'; ctx.fillText('Servers:', sx(520), sy(220)); serversButtonRects = [];
-      let syPos = sy(260); ctx.font = `${Math.max(10, Math.round(14 * scale))}px Arial`;
-      for (let i = 0; i < servers.length; i++) {
-        const sRow = servers[i];
-        const rx = sx(520), rw = Math.round(440 * scale), rh = Math.round(40 * scale);
-        roundRectLocal(ctx, rx, syPos, rw, rh, 6, true, '#2a2a33');
-        ctx.fillStyle = '#fff';
-        const label = `${sRow.id} — players: ${sRow.players}/${sRow.maxPlayers} ${sRow.started ? '[started]' : ''}`;
-        ctx.fillText(label, rx + sx(10), syPos + Math.round(10 * scale));
-        const bx = rx + rw - Math.round(80 * scale), by = syPos + Math.round(6 * scale), bw = Math.round(70 * scale), bh = Math.round(28 * scale);
-        roundRectLocal(ctx, bx, by, bw, bh, 6, true, '#4682b4');
-        ctx.fillStyle = '#fff'; ctx.font = FONT; ctx.fillText('Join', bx + Math.round(18 * scale), by + Math.round(4 * scale));
-        serversButtonRects.push({ x: bx, y: by, w: bw, h: bh });
-        syPos += Math.round(54 * scale);
-        if (syPos > canvas.clientHeight - Math.round(80 * scale)) break;
-      }
+            gctx.lineWidth = LINE_THICKNESS;
+            gctx.strokeStyle = LINE_COLOR;
+            gctx.shadowColor = 'rgba(249,115,22,0.6)';
+            gctx.shadowBlur = 5;
+            for (const [a, b] of con) {
+                drawLineLocal(pts[a].pos, pts[b].pos, LINE_THICKNESS);
+            }
+            gctx.shadowBlur = 0;
+            gctx.shadowColor = 'transparent';
 
-      // draw keyboard UI if editing name/room
-      if (input_active) drawKeyboard();
+            for (const tri of tris) {
+                try {
+                    const ptsList = tri.points.map(i => pts[i].pos);
+                    const color = PLAYERS_COLORS[tri.owner] || PLAYERS_COLORS[0];
+                    const cx = (ptsList[0][0] + ptsList[1][0] + ptsList[2][0]) / 3;
+                    const cy = (ptsList[0][1] + ptsList[1][1] + ptsList[2][1]) / 3;
+                    drawHexagonLocal(color, [cx, cy], Math.max(6, Math.round(8 * gScale)), true);
+                } catch (e) { }
+            }
 
-      ctx.font = FONT;
-    }
+            if (temp_centers) {
+                for (const [center, color] of temp_centers) {
+                    drawHexagonLocal(color, center, Math.max(8, Math.round(10 * gScale)), true);
+                }
+            }
 
-    ///// Main loop
-    async function mainLoop() {
-      try { await handle_server_messages(); } catch (e) { }
-      if (room_chosen === null && con.length === 0 && tris.length === 0) {
-        drawLobbyUI();
-      } else {
-        drawFrame(sel, drag_pos);
-      }
-      requestAnimationFrame(mainLoop);
-    }
-    requestAnimationFrame(mainLoop);
+            for (const p of pts) {
+                drawHexagonLocal('rgba(15,23,42,1)', p.pos, Math.max(DR + 4, DR + 6), true);
+                drawHexagonLocal(DOT, p.pos, Math.max(DR, DR + 1), true);
+            }
 
-    (async () => { try { await ws_client.connect(); requestRoomsList(); } catch (e) { console.warn('initial ws connect failed', e); } })();
-    setInterval(() => { if (ws_client.connected && room_chosen === null) requestRoomsList(); }, 5000);
+            claimRects = [];
+            if (claimMode && claimCandidates.length > 0) {
+                for (const c of claimCandidates) {
+                    const center = c.center;
+                    drawHexagonLocal('#22c55e', center, Math.max(10, Math.round(11 * gScale)), true);
+                    drawHexagonLocal('#bbf7d0', center, Math.max(6, Math.round(7 * gScale)), true);
+                    const r = Math.round(24 * gScale);
+                    claimRects.push({
+                        x: center[0] - r,
+                        y: center[1] - r,
+                        w: r * 2,
+                        h: r * 2,
+                        tri: c.points
+                    });
+                }
+            }
 
-    function logState() { console.log({ con, tris, score, moves, turn, room_chosen, player_index, servers, playerNames, claimMode }); }
+            if (sel_local !== null && dragPos) {
+                gctx.setLineDash([8, 6]);
+                gctx.lineWidth = LINE_THICKNESS;
+                gctx.strokeStyle = '#facc15';
+                gctx.shadowColor = 'rgba(250,204,21,0.7)';
+                gctx.shadowBlur = 10;
+                drawLineLocal(pts[sel_local].pos, dragPos, LINE_THICKNESS);
+                gctx.setLineDash([]);
+                gctx.shadowBlur = 0;
+                gctx.shadowColor = 'transparent';
+            }
+        }
 
-  </script>
+        function drawImmediate() {
+            drawFrame(sel, drag_pos);
+        }
+
+        function updateGameHUD() {
+            const n = Math.max(
+                playerNames ? playerNames.length : 0,
+                moves.length,
+                score.length
+            );
+            if (n === 0) return;
+
+            gameTopPlayers.innerHTML = '';
+            gameBottomPlayer.innerHTML = '';
+
+            const players = [];
+            for (let i = 0; i < n; i++) {
+                const nm = playerNames && playerNames[i] ? playerNames[i] : ('P' + (i + 1));
+                players.push({ index: i, name: nm });
+            }
+
+            const meIdx = (currentPlayerIndex != null && currentPlayerIndex < n) ? currentPlayerIndex : 0;
+            const me = players[meIdx];
+
+            const meCard = document.createElement('div');
+            meCard.className = 'game-player-card me';
+            const myScore = score[meIdx] || 0;
+            const myMoves = moves[meIdx] || 0;
+            const isMyTurn = (turn === meIdx && !game_over);
+
+            meCard.innerHTML = `
+      <div class="avatar-circle"></div>
+      <div class="game-player-meta">
+        <div class="game-player-label">${isMyTurn ? 'Your turn' : 'You'}</div>
+        <div class="game-player-name">${me.name}</div>
+        <div class="game-player-label">Score: ${myScore} • Moves: ${myMoves}</div>
+      </div>
+    `;
+            gameBottomPlayer.appendChild(meCard);
+
+            players.forEach(p => {
+                if (p.index === meIdx) return;
+                const sc = score[p.index] || 0;
+                const mv = moves[p.index] || 0;
+                const card = document.createElement('div');
+                card.className = 'game-player-card';
+                if (turn === p.index && !game_over) card.classList.add('color-blue');
+                card.innerHTML = `
+        <div class="avatar-circle"></div>
+        <div class="game-player-meta">
+          <div class="game-player-name">${p.name}</div>
+          <div class="game-player-label">Score: ${sc} • Moves: ${mv}</div>
+        </div>
+      `;
+                gameTopPlayers.appendChild(card);
+            });
+
+            if (endTurnBtn) {
+                const canEnd = !game_over && claimMode && claimCandidates.length > 0 && currentPlayerIndex === turn;
+                endTurnBtn.disabled = !canEnd;
+            }
+        }
+
+        function showGameScreen() {
+            mainMenu.style.display = 'none';
+            lobbyWrap.style.display = 'none';
+            gameScreen.style.display = 'flex';
+            window.scrollTo(0, 0);
+            setupCanvasSize();
+            drawImmediate();
+        }
+
+        function handleGameStart(data) {
+            con = [];
+            tris = [];
+
+            score = Array.isArray(data.score) ? data.score.slice() : [0, 0, 0, 0];
+            moves = Array.isArray(data.moves) ? data.moves.slice() : [DEFAULT_MOVES, DEFAULT_MOVES, DEFAULT_MOVES, DEFAULT_MOVES];
+
+            turn = (typeof data.turn === 'number') ? data.turn : 0;
+            game_over = false;
+            winner = null;
+            waiting_for_server = false;
+            claimMode = false;
+            claimCandidates = [];
+            claimRects = [];
+            gameStarted = true;
+
+            playerNames = [];
+            playerAvatars = [];
+
+            if (Array.isArray(data.playerNames)) {
+                playerNames = data.playerNames.slice();
+            }
+            if (Array.isArray(data.players)) {
+                const maxIdx = Math.max(...data.players.map(p => p.index));
+                playerNames = Array(maxIdx + 1).fill(null);
+                playerAvatars = Array(maxIdx + 1).fill(null);
+                data.players.forEach(p => {
+                    playerNames[p.index] = p.name;
+                    playerAvatars[p.index] = p.avatar || null;
+                });
+            }
+
+            hideWinnerOverlay();
+            updateGameHUD();
+            showGameScreen();
+        }
+
+        function handleStateUpdate(data) {
+            try {
+                con = (data.con || []).map(pair => [pair[0], pair[1]]);
+            } catch (e) { con = []; }
+
+            if (Array.isArray(data.tris)) {
+                tris = data.tris.map(tr => ({ points: tr.points.slice(), owner: tr.owner }));
+            } else {
+                const new_tris = data.new_tris || [];
+                for (const tr of new_tris) {
+                    const pts_trip = tr.points.slice();
+                    const owner = tr.owner;
+                    if (!tris.find(t => arraysEqual(t.points.slice().sort(), pts_trip.slice().sort()))) {
+                        tris.push({ points: pts_trip, owner });
+                    }
+                }
+            }
+
+            if (Array.isArray(data.score)) score = data.score.slice();
+            if (Array.isArray(data.moves)) moves = data.moves.slice();
+            if (typeof data.turn === 'number') turn = data.turn;
+            if (typeof data.game_over === 'boolean') game_over = data.game_over;
+            if (typeof data.winner !== 'undefined') winner = data.winner;
+
+            if (Array.isArray(data.playerNames)) playerNames = data.playerNames.slice();
+            if (Array.isArray(data.players)) {
+                const maxIdx = Math.max(...data.players.map(p => p.index));
+                playerNames = Array(maxIdx + 1).fill(null);
+                playerAvatars = Array(maxIdx + 1).fill(null);
+                data.players.forEach(p => {
+                    playerNames[p.index] = p.name;
+                    playerAvatars[p.index] = p.avatar || null;
+                });
+            }
+
+            waiting_for_server = false;
+
+            updateClaimCandidates();
+
+            if (claimMode && currentRoomId && wsConnected && currentPlayerIndex === turn && claimCandidates.length === 0) {
+                waiting_for_server = true;
+                sendWS({ type: 'end_turn', room: currentRoomId });
+                claimMode = false;
+            }
+            if (turn !== currentPlayerIndex) {
+                claimMode = false;
+            }
+
+            updateGameHUD();
+            drawImmediate();
+        }
+
+        function showWinnerOverlay(name, emoji = '🏆', avatarUrl = null) {
+            winnerEmojiEl.textContent = emoji;
+            winnerTitleEl.textContent = 'WINNER';
+            winnerNameLabel.textContent = name || 'Player';
+            winnerSubtitleEl.textContent = 'Nice triangles!';
+            winnerCountdownValue = 10;
+            winnerCountdownEl.textContent = `Returning to main menu in ${winnerCountdownValue}…`;
+
+            if (avatarUrl) {
+                winnerAvatarEl.style.backgroundImage = `url(${avatarUrl})`;
+            } else {
+                winnerAvatarEl.style.backgroundImage = '';
+            }
+
+            if (winnerCountdownTimer) clearTimeout(winnerCountdownTimer);
+            if (winnerCountdownInterval) clearInterval(winnerCountdownInterval);
+
+            winnerOverlay.style.display = 'flex';
+
+            winnerCountdownInterval = setInterval(() => {
+                winnerCountdownValue = Math.max(0, winnerCountdownValue - 1);
+                winnerCountdownEl.textContent = `Returning to main menu in ${winnerCountdownValue}…`;
+                if (winnerCountdownValue <= 0) {
+                    clearInterval(winnerCountdownInterval);
+                }
+            }, 1000);
+
+            winnerCountdownTimer = setTimeout(() => {
+                backToMainFromWinner();
+            }, 10000);
+        }
+
+        function hideWinnerOverlay() {
+            winnerOverlay.style.display = 'none';
+            if (winnerCountdownTimer) clearTimeout(winnerCountdownTimer);
+            if (winnerCountdownInterval) clearInterval(winnerCountdownInterval);
+            winnerCountdownTimer = null;
+            winnerCountdownInterval = null;
+        }
+
+        function backToMainFromWinner() {
+            hideWinnerOverlay();
+            resetRoomClientState();
+            showMainMenu();
+        }
+
+        winnerSkipBtn.addEventListener('click', backToMainFromWinner);
+
+        function handleGameOver(data) {
+            game_over = true;
+            winner = data.winner;
+
+            let winnerName = data.winnerName || null;
+            if (!winnerName && typeof data.winner === 'number' && playerNames[data.winner]) {
+                winnerName = playerNames[data.winner];
+            }
+
+            let avatarUrl = null;
+            if (data.winnerAvatar) {
+                avatarUrl = data.winnerAvatar;
+            } else if (typeof data.winner === 'number' && playerAvatars[data.winner]) {
+                avatarUrl = playerAvatars[data.winner];
+            } else if (typeof data.winner === 'number' && data.winner === currentPlayerIndex && localAvatarDataUrl) {
+                avatarUrl = localAvatarDataUrl;
+            }
+
+            showWinnerOverlay(winnerName || 'Player', data.emoji || '🏆', avatarUrl);
+            updateGameHUD();
+            drawImmediate();
+        }
+
+        function canvasPosFromEvent(clientX, clientY) {
+            const rect = gameCanvas.getBoundingClientRect();
+            return {
+                x: Math.round(clientX - rect.left),
+                y: Math.round(clientY - rect.top)
+            };
+        }
+
+        function localAcceptClaims(triangles) {
+            const edgesSet = new Set(con.map(e => `${e[0]}-${e[1]}`));
+            const existing = new Set(tris.map(t => triKeyFromPoints(t.points)));
+            const accepted = [];
+            for (const tri of triangles) {
+                const key = triKeyFromPoints(tri);
+                if (existing.has(key)) continue;
+                const [a, b, c] = tri;
+                const e1 = sortedPair(a, b).join('-');
+                const e2 = sortedPair(b, c).join('-');
+                const e3 = sortedPair(a, c).join('-');
+                if (edgesSet.has(e1) && edgesSet.has(e2) && edgesSet.has(e3)) {
+                    tris.push({ points: tri.slice(), owner: turn });
+                    accepted.push(tri.slice());
+                }
+            }
+            if (accepted.length) score[turn] += accepted.length;
+
+            updateClaimCandidates();
+
+            const new_tris_for_anim = accepted.map(t => ({
+                points: t,
+                center: tri_center_scaled([pts[t[0]].pos, pts[t[1]].pos, pts[t[2]].pos]),
+                color: PLAYERS_COLORS[turn]
+            }));
+            if (new_tris_for_anim.length) animateTriangleCentersScaled(new_tris_for_anim);
+
+            if (claimCandidates.length === 0) {
+                claimMode = false;
+                turn = (turn + 1) % moves.length;
+            }
+            updateGameHUD();
+            drawImmediate();
+        }
+
+        function handleCanvasDown(clientX, clientY) {
+            if (!gameStarted || animating || waiting_for_server || game_over) return;
+
+            const pos = canvasPosFromEvent(clientX, clientY);
+            const mx = pos.x, my = pos.y;
+
+            if (claimMode) {
+                for (const r of claimRects) {
+                    if (mx >= r.x && mx <= r.x + r.w && my >= r.y && my <= r.y + r.h) {
+                        const triangles = [r.tri.slice()];
+                        if (wsConnected && currentRoomId) {
+                            waiting_for_server = true;
+                            sendWS({ type: 'claim_triangles', room: currentRoomId, triangles });
+                        } else {
+                            localAcceptClaims(triangles);
+                        }
+                        return;
+                    }
+                }
+                return;
+            }
+
+            if (wsConnected && currentRoomId && currentPlayerIndex !== turn) {
+                return;
+            }
+
+            if (score[turn] >= 15 || moves[turn] <= 0) return;
+
+            const i = nearScaled([mx, my]);
+            if (i !== null) {
+                if (sel === null) {
+                    sel = i;
+                    drag_pos = [mx, my];
+                    drawImmediate();
+                    return;
+                } else if (i !== sel) {
+                    const path = line_ok_scaled(sel, i);
+                    if (path.length === STEP_POINTS) {
+                        let made_line = false;
+                        const newEdges = [];
+                        for (let k = 0; k < path.length - 1; k++) {
+                            const a = path[k], b = path[k + 1];
+                            const edge = sortedPair(a, b);
+                            if (!con.find(e => e[0] === edge[0] && e[1] === edge[1])) {
+                                made_line = true;
+                                newEdges.push(edge);
+                            }
+                        }
+                        if (made_line) {
+                            if (wsConnected && currentRoomId) {
+                                waiting_for_server = true;
+                                for (const e of newEdges) con.push(e);
+
+                                const hypotheticalEdges = con.slice();
+                                const raw = find_triangles_from_edges(hypotheticalEdges);
+                                const existing = new Set(tris.map(t => triKeyFromPoints(t.points)));
+                                const newCandidates = raw.filter(t => !existing.has(triKeyFromPoints(t)));
+
+                                sendWS({ type: 'make_move', room: currentRoomId, path });
+
+                                if (newCandidates.length === 0) {
+                                    sendWS({ type: 'end_turn', room: currentRoomId });
+                                    claimMode = false;
+                                } else {
+                                    claimMode = true;
+                                    updateClaimCandidates();
+                                }
+                            } else {
+                                for (const e of newEdges) con.push(e);
+                                updateClaimCandidates();
+                                if (claimCandidates.length === 0) {
+                                    turn = (turn + 1) % moves.length;
+                                } else {
+                                    claimMode = true;
+                                }
+                            }
+                        }
+                    }
+                    sel = null;
+                    drag_pos = null;
+                    updateGameHUD();
+                    drawImmediate();
+                }
+            }
+        }
+
+        function handleCanvasMove(clientX, clientY) {
+            if (sel === null || animating || waiting_for_server || !gameStarted) return;
+            const pos = canvasPosFromEvent(clientX, clientY);
+            drag_pos = [pos.x, pos.y];
+            drawImmediate();
+        }
+
+        gameCanvas.addEventListener('mousedown', ev => {
+            handleCanvasDown(ev.clientX, ev.clientY);
+        });
+        gameCanvas.addEventListener('mousemove', ev => {
+            handleCanvasMove(ev.clientX, ev.clientY);
+        });
+        gameCanvas.addEventListener('touchstart', ev => {
+            ev.preventDefault();
+            const t = ev.touches[0];
+            if (!t) return;
+            handleCanvasDown(t.clientX, t.clientY);
+        }, { passive: false });
+        gameCanvas.addEventListener('touchmove', ev => {
+            ev.preventDefault();
+            const t = ev.touches[0];
+            if (!t) return;
+            handleCanvasMove(t.clientX, t.clientY);
+        }, { passive: false });
+        gameCanvas.addEventListener('touchend', ev => {
+            const t = ev.changedTouches[0];
+            if (!t) return;
+            handleCanvasDown(t.clientX, t.clientY);
+            sel = null;
+            drag_pos = null;
+            drawImmediate();
+        });
+
+        if (endTurnBtn) {
+            endTurnBtn.addEventListener('click', () => {
+                if (!gameStarted || game_over) return;
+                if (!currentRoomId || !wsConnected) {
+                    claimMode = false;
+                    turn = (turn + 1) % moves.length;
+                    updateGameHUD();
+                    drawImmediate();
+                    return;
+                }
+                waiting_for_server = true;
+                sendWS({ type: 'end_turn', room: currentRoomId });
+                claimMode = false;
+                endTurnBtn.disabled = true;
+            });
+        }
+
+        window.addEventListener('resize', () => {
+            if (gameScreen.style.display !== 'none') {
+                setupCanvasSize();
+            }
+        });
+    </script>
+
 </body>
 
 </html>
