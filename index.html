@@ -1359,9 +1359,16 @@
         });
 
         enterNameBtn.addEventListener('click', handleEnterNickname);
-        nicknameInput.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter') handleEnterNickname();
+        // Show keyboard when nickname input is focused
+        nicknameInput.addEventListener('focus', () => showKeyboard(true, 'nickname'));
+
+// Prevent native keyboard on mobile + open VKB
+        nicknameInput.addEventListener('touchstart', e => { 
+           e.preventDefault();
+           nicknameInput.blur();
+           showKeyboard(true, 'nickname');
         });
+
 
         /* ===== IndexedDB for name & avatar ===== */
         let dbPromise = null;
@@ -1774,11 +1781,19 @@
         roomInput.addEventListener('focus', () => showKeyboard(true, 'room'));
 
         document.addEventListener('click', e => {
-            if (!e.target.closest('.field') && !e.target.closest('.vkb') && e.target !== nicknameInput) {
-                showKeyboard(false, null);
-                roomInput.blur();
-            }
-        });
+    if (
+        !e.target.closest('.field') &&
+        !e.target.closest('.vkb') &&
+        e.target !== nicknameInput &&
+        e.target !== profileNameInput
+    ) {
+        showKeyboard(false, null);
+        nicknameInput.blur();
+        profileNameInput.blur();
+        roomInput.blur();
+    }
+});
+
 
         roomInput.addEventListener('touchstart', e => { e.preventDefault(); roomInput.blur(); showKeyboard(true, 'room'); });
 
@@ -1816,12 +1831,32 @@
         }
 
         profileNameSaveBtn.addEventListener('click', saveProfileNickname);
-        profileNameInput.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter') {
-                e.preventDefault();
-                saveProfileNickname();
-            }
-        });
+        // Show VKB
+profileNameInput.addEventListener('focus', () => showKeyboard(true, 'profile'));
+
+// Prevent native keyboard
+profileNameInput.addEventListener('touchstart', e => {
+    e.preventDefault();
+    profileNameInput.blur();
+    showKeyboard(true, 'profile');
+});
+
+
+const attachVKB = (inputEl, type) => {
+    inputEl.addEventListener('focus', () => showKeyboard(true, type));
+
+    inputEl.addEventListener('touchstart', e => {
+        e.preventDefault();
+        inputEl.blur();
+        showKeyboard(true, type);
+    });
+};
+
+// Apply
+attachVKB(nicknameInput, 'nickname');
+attachVKB(profileNameInput, 'profile');
+attachVKB(roomInput, 'room');
+
 
         const MAX_SIZE = 1024 * 1024;
         avatarInput.addEventListener('change', e => {
