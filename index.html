@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en">
+<html lang="ru">
 
 <head>
     <meta charset="utf-8" />
@@ -40,13 +40,69 @@
             touch-action: none;
         }
 
+        .muted {
+            color: var(--muted);
+        }
+
+        /* ===================== SPLASH + NAME SCREENS ===================== */
+
+        .splash-screen,
+        .name-screen {
+            min-height: 100vh;
+            max-width: 420px;
+            margin: 0 auto;
+            padding: 24px 20px 32px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            gap: 18px;
+        }
+
+        .splash-logo {
+            font-size: 40px;
+            font-weight: 900;
+            letter-spacing: 0.18em;
+        }
+
+        .splash-logo span {
+            color: #ffd75e;
+        }
+
+        .splash-sub {
+            font-size: 13px;
+            letter-spacing: 0.16em;
+            text-transform: uppercase;
+            opacity: 0.9;
+        }
+
+        .name-card {
+            width: 100%;
+            max-width: 380px;
+        }
+
+        .name-card h2 {
+            margin: 0 0 6px 0;
+            font-size: 18px;
+        }
+
+        .name-card p {
+            margin: 0;
+            font-size: 13px;
+        }
+
+        .name-card .field {
+            margin-top: 14px;
+        }
+
         /* ===================== MAIN MENU ===================== */
 
         .main-menu {
             max-width: 420px;
             margin: 0 auto;
             padding: 18px 20px 32px;
-            display: flex;
+            display: none;
             flex-direction: column;
             align-items: center;
             gap: 18px;
@@ -128,10 +184,32 @@
 
         .profile-extra {
             display: none;
-            align-items: center;
+            flex-direction: column;
             gap: 8px;
             width: 100%;
-            justify-content: space-between;
+            align-items: center;
+            text-align: center;
+        }
+
+        .profile-extra-row {
+            display: flex;
+            gap: 8px;
+            width: 100%;
+            justify-content: center;
+            margin-top: 8px;
+            /* или 10–12px, как понравится */
+        }
+
+        .profile-extra-row input {
+            flex: 1;
+            max-width: 200px;
+            border-radius: 999px;
+            border: 1px solid rgba(255, 255, 255, 0.16);
+            padding: 6px 10px;
+            background: rgba(15, 23, 42, 0.9);
+            color: #e5e7eb;
+            font-size: 13px;
+            outline: none;
         }
 
         .profile-pill.open .profile-main {
@@ -153,10 +231,17 @@
             font-size: 12px;
             font-weight: 600;
             cursor: pointer;
+            white-space: nowrap;
         }
 
         .upload-btn span {
             margin-left: 6px;
+        }
+
+        .enter-btn {
+            background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+            /* другой цвет */
+            color: #e5e7eb;
         }
 
         .avatar-error {
@@ -292,28 +377,6 @@
             transition: transform 160ms ease-out;
         }
 
-        .mode-pass {
-            background: radial-gradient(circle at 10% 0%, #ffb267 0, #ff583c 45%, #31101a 100%);
-            cursor: pointer;
-        }
-
-        .mode-pass .mode-header {
-            background: linear-gradient(90deg, #ff9655, #ffce63);
-            color: #451106;
-        }
-
-        .mode-pass .mode-title {
-            color: #ffe7df;
-        }
-
-        .mode-pass .mode-sub {
-            color: #fbd3c3;
-        }
-
-        .mode-pass .mode-footer .mode-pill {
-            background: rgba(0, 0, 0, 0.26);
-        }
-
         .mode-single {
             background: radial-gradient(circle at 10% 0%, #8effb2 0, #20b56a 40%, #051b14 100%);
             cursor: pointer;
@@ -359,6 +422,22 @@
             background: radial-gradient(circle at 30% 10%, #78c4ff, #257bdb 65%, #0450a8 92%);
         }
 
+        /* ===================== SPLASH & NAME ===================== */
+
+        .splash-screen,
+        .name-screen {
+            min-height: 100vh;
+            max-width: 420px;
+            margin: 0 auto;
+            padding: 24px 20px 32px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            gap: 18px;
+        }
+
         /* ===================== LOBBY ===================== */
 
         .wrap {
@@ -366,14 +445,10 @@
             max-width: 980px;
             margin: 24px auto 40px;
             padding: 20px;
-            display: flex;
+            display: none;
             gap: 20px;
             align-items: flex-start;
             justify-content: center;
-        }
-
-        #lobbyWrap {
-            display: none;
         }
 
         .left {
@@ -381,7 +456,7 @@
             min-width: 320px;
             display: flex;
             flex-direction: column;
-            gap: 18px;
+            gap: 12px;
         }
 
         .card {
@@ -479,9 +554,10 @@
             font-weight: 800;
             border: 0;
             cursor: pointer;
-            display: flex;
+            display: inline-flex;
             gap: 10px;
             align-items: center;
+            justify-content: center;
             box-shadow: 0 12px 30px rgba(42, 139, 214, 0.4);
         }
 
@@ -706,12 +782,8 @@
             font-size: 14px;
             background: linear-gradient(135deg, #0f172a, #1d3655);
             border-color: rgba(148, 163, 184, 0.5);
-            /* без постоянной подсветки */
-            /* <<< */
         }
 
-        /* Подсветка того игрока, чей ход */
-        /* <<< */
         .game-player-card.turn {
             border-color: rgba(96, 165, 250, 0.9);
             box-shadow: 0 12px 28px rgba(37, 99, 235, 0.6);
@@ -733,7 +805,6 @@
             padding: 8px 0 12px;
         }
 
-        /* высокий канвас, чтобы верх/низ гекса не срезались */
         #gameCanvas {
             width: min(100vw - 24px, 900px);
             height: calc(min(100vw - 24px, 900px) * 1.15);
@@ -811,6 +882,10 @@
             font-size: 22px;
             letter-spacing: 0.08em;
             text-transform: uppercase;
+            display: block;
+            /* отменяем display:flex */
+            text-align: center;
+            /* центрируем текст */
         }
 
         #winnerOverlay p {
@@ -858,13 +933,11 @@
             transition: opacity 0.25s ease-out, transform 0.25s ease-out;
         }
 
-        /* видимое состояние */
         .alert-bar.show {
             opacity: 1;
             transform: translateX(-50%) translateY(0);
         }
 
-        /* Типы сообщений (по желанию) */
         .alert-bar.info {
             border-color: rgba(96, 165, 250, 0.9);
         }
@@ -876,7 +949,6 @@
         .alert-bar.success {
             border-color: rgba(74, 222, 128, 0.95);
         }
-
 
         @media (max-width:920px) {
             .wrap {
@@ -902,8 +974,33 @@
 <body>
     <div id="alertBar" class="alert-bar"></div>
 
+    <!-- ===================== SPLASH SCREEN ===================== -->
+    <div id="splashScreen" class="splash-screen">
+        <div class="splash-logo">
+            TRIGGLE
+        </div>
+        <div class="splash-sub muted">CHESS GAME</div>
+        <button id="playSplashBtn" class="primary" style="margin-top:24px;">
+            Play
+        </button>
+    </div>
+
+    <!-- ===================== NAME SCREEN ===================== -->
+    <div id="nameScreen" class="name-screen" style="display:none;">
+        <div class="card name-card">
+            <h2>Ваш никнейм</h2>
+            <p class="muted">Он будет виден другим игрокам</p>
+            <div class="field">
+                <input id="nicknameInput" type="text" maxlength="20" placeholder="Введите никнейм. Пример: Marlon" />
+            </div>
+            <button id="enterNameBtn" class="primary" style="margin-top:16px;width:100%;">
+                Enter
+            </button>
+        </div>
+    </div>
+
     <!-- ===================== MAIN MENU ===================== -->
-    <div id="mainMenu" class="main-menu">
+    <div id="mainMenu" class="main-menu" style="display:none;">
         <div class="top-bar">
             <div class="profile-pill" id="profilePill">
                 <div class="profile-main">
@@ -913,6 +1010,10 @@
                     </div>
                 </div>
                 <div class="profile-extra">
+                    <div class="profile-extra-row">
+                        <input id="profileNameInput" type="text" maxlength="20" placeholder="Новый никнейм" />
+                        <button id="profileNameSaveBtn" class="upload-btn enter-btn">Enter</button>
+                    </div>
                     <label class="upload-btn" id="uploadAvatarLabel">
                         <svg width="14" height="14" viewBox="0 0 24 24">
                             <path fill="currentColor" d="M5 20h14v-2H5v2zm7-16l-5 5h3v4h4v-4h3l-5-5z" />
@@ -923,8 +1024,6 @@
                     <div class="avatar-error" id="avatarError"></div>
                 </div>
             </div>
-
-            <!-- Кнопка How to play убрана --> <!-- <<< -->
         </div>
 
         <div class="logo">
@@ -975,15 +1074,13 @@
                     </div>
                 </div>
             </div>
-
-            <!-- Subscription блок убран --> <!-- <<< -->
         </div>
     </div>
 
     <!-- ===================== LOBBY ===================== -->
     <div id="lobbyWrap" class="wrap">
         <div class="left">
-            <button id="backBtn" class="small-btn" style="align-self:flex-start;margin-bottom:4px;">← Назад</button>
+            <button id="createBackBtn" class="small-btn" style="align-self:flex-start;">← Назад</button>
 
             <div class="card" id="lobby-card">
                 <h2>
@@ -995,13 +1092,7 @@
 
                 <div class="row">
                     <div class="inputs">
-                        <div class="field">
-                            <svg width="18" height="18" viewBox="0 0 24 24">
-                                <path fill="currentColor"
-                                    d="M12 12a5 5 0 100-10 5 5 0 000 10zm0 2c-4.4 0-8 2.2-8 4.9V22h16v-3.1c0-2.7-3.6-4.9-8-4.9z" />
-                            </svg>
-                            <input id="nameInput" type="text" placeholder="Your name" value="Player" />
-                        </div>
+                        <!-- имя убрано из UI -->
                         <div class="field">
                             <svg width="18" height="18" viewBox="0 0 24 24">
                                 <path fill="currentColor" d="M12 2l10 6v8l-10 6L2 16V8z" />
@@ -1017,7 +1108,6 @@
                             </svg>
                             Create
                         </button>
-                        <button id="startBtn" class="secondary" style="margin-top:6px">Start</button>
                     </div>
                 </div>
 
@@ -1032,24 +1122,31 @@
                     </div>
                 </div>
             </div>
+
+            <!-- скрытый input, чтобы код, который ссылается на nameInput, не ломался -->
+            <input id="nameInput" type="hidden" value="">
         </div>
 
         <div class="right">
-            <div class="players-list card">
+            <button id="backBtn" class="small-btn" style="align-self:flex-start;margin-bottom:4px;">← Назад</button>
+
+            <div class="players-list card" style="display:none;">
                 <h3>Players in room</h3>
                 <div id="playersContainer"></div>
-                <div style="display:flex;gap:8px;align-items:center;margin-top:8px">
+                <div style="display:flex;gap:8px;align-items:center;margin-top:8px;justify-content:space-between;">
                     <button id="leaveBtn" class="small-btn">Leave</button>
-                    <div style="flex:1"></div>
                     <div class="muted">Max: <b id="maxPlayersLabel">4</b></div>
+                    <button id="startBtn" class="primary" style="padding-inline:14px;">Start</button>
                 </div>
             </div>
 
             <div class="servers-list card">
                 <h3>Servers</h3>
                 <div id="serversContainer"></div>
-                <div style="display:flex;justify-content:center;margin-top:8px">
+                <div style="display:flex;justify-content:space-between;margin-top:8px;gap:8px;flex-wrap:wrap;">
                     <button id="refreshServers" class="small-btn">Refresh</button>
+                    <button id="openCreateLobbyBtn" class="primary" style="flex:1;justify-content:center;">Create
+                        Server</button>
                 </div>
             </div>
         </div>
@@ -1111,16 +1208,26 @@
         const playPanel = document.getElementById('playPanel');
         const singlePanel = document.getElementById('singlePanel');
 
+        const splashScreen = document.getElementById('splashScreen');
+        const nameScreen = document.getElementById('nameScreen');
+        const playSplashBtn = document.getElementById('playSplashBtn');
+        const nicknameInput = document.getElementById('nicknameInput');
+        const enterNameBtn = document.getElementById('enterNameBtn');
+
+        const leftCol = document.querySelector('.left');
+        const rightCol = document.querySelector('.right');
+        const lobbyCard = document.getElementById('lobby-card');
+        const playersListCard = document.querySelector('.players-list.card');
+        const serversListCard = document.querySelector('.servers-list.card');
+        const createBackBtn = document.getElementById('createBackBtn');
+
         let alertBarTimer = null;
 
         function showAlertBar(message, type = 'info', duration = 2500) {
             if (!alertBar) return;
-            // сбрасываем классы
             alertBar.className = 'alert-bar';
             if (type) alertBar.classList.add(type);
             alertBar.textContent = message;
-
-            // показываем
             alertBar.classList.add('show');
 
             if (alertBarTimer) clearTimeout(alertBarTimer);
@@ -1129,14 +1236,46 @@
             }, duration);
         }
 
-        playPanel.addEventListener('click', () => {
-            mainMenu.style.display = 'none';
+        function showServersView() {
             lobbyWrap.style.display = 'flex';
+            leftCol.style.display = 'none';
+            rightCol.style.display = 'flex';
+            playersListCard.style.display = 'none';
+            serversListCard.style.display = 'block';
+            startRoomsAutoRefresh();
+            backBtn.style.display = 'inline-block';
+            window.scrollTo(0, 0);
+        }
+
+        function showCreateLobbyView() {
+            lobbyWrap.style.display = 'flex';
+            leftCol.style.display = 'flex';
+            lobbyCard.style.display = 'block';
+            rightCol.style.display = 'none';
+            playersListCard.style.display = 'none';
+            serversListCard.style.display = 'none';
+            stopRoomsAutoRefresh();
+            window.scrollTo(0, 0);
+        }
+
+        function showPlayersView() {
+            lobbyWrap.style.display = 'flex';
+            leftCol.style.display = 'none';
+            rightCol.style.display = 'flex';
+            playersListCard.style.display = 'block';
+            serversListCard.style.display = 'none';
+            stopRoomsAutoRefresh();
+            backBtn.style.display = 'none'; // в players-list кнопки Назад нет
+            window.scrollTo(0, 0);
+        }
+
+        playPanel.addEventListener('click', () => {
+            if (!ensureNickname()) return;
+            mainMenu.style.display = 'none';
             gameScreen.style.display = 'none';
             connectWS();
             requestRoomsList();
-            startRoomsAutoRefresh();
-            window.scrollTo(0, 0);
+            showServersView();
         });
 
         const backBtn = document.getElementById('backBtn');
@@ -1148,21 +1287,81 @@
             window.scrollTo(0, 0);
         });
 
+        createBackBtn.addEventListener('click', () => {
+            showServersView();
+        });
+
         singlePanel.addEventListener('click', () => {
+            if (!ensureNickname()) return;
             startSinglePlayerGame();
         });
 
         // Lobby elements
-        const nameInput = document.getElementById('nameInput');
+        const nameInput = document.getElementById('nameInput'); // скрытый
         const roomInput = document.getElementById('roomInput');
         const createBtn = document.getElementById('createBtn');
         const startBtn = document.getElementById('startBtn');
         const leaveBtn = document.getElementById('leaveBtn');
         const refreshServers = document.getElementById('refreshServers');
+        const openCreateLobbyBtn = document.getElementById('openCreateLobbyBtn');
         const playersContainer = document.getElementById('playersContainer');
         const serversContainer = document.getElementById('serversContainer');
         const maxPlayersLabel = document.getElementById('maxPlayersLabel');
         const profileNameEl = document.querySelector('.profile-name');
+
+        // ===== Никнейм (глобальный) =====
+        let currentNickname = '';
+
+        function setNickname(nick) {
+            currentNickname = (nick || '').trim();
+            if (nameInput) nameInput.value = currentNickname;
+            profileNameEl.textContent = currentNickname || 'Player';
+            if (currentNickname) {
+                saveToSettings('playerName', currentNickname).catch(console.warn);
+            }
+        }
+
+        function hasValidName() {
+            return !!(currentNickname && currentNickname.trim().length > 0);
+        }
+
+        function ensureNickname() {
+            if (!hasValidName()) {
+                showAlertBar('нету никнейма', 'error');
+                return false;
+            }
+            return true;
+        }
+
+        // === Splash -> Name screen logic ===
+        function handleEnterNickname() {
+            const nick = (nicknameInput.value || '').trim();
+            if (!nick) {
+                showAlertBar('Введите никнейм', 'error');
+                return;
+            }
+            setNickname(nick);
+            nameScreen.style.display = 'none';
+            mainMenu.style.display = 'flex';
+        }
+
+        playSplashBtn.addEventListener('click', () => {
+            splashScreen.style.display = 'none';
+
+            if (hasValidName()) {
+                mainMenu.style.display = 'flex';
+            } else {
+                nameScreen.style.display = 'flex';
+                nicknameInput.value = '';
+                nicknameInput.placeholder = 'Введите никнейм. Пример: Marlon';
+                nicknameInput.focus();
+            }
+        });
+
+        enterNameBtn.addEventListener('click', handleEnterNickname);
+        nicknameInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') handleEnterNickname();
+        });
 
         /* ===== IndexedDB for name & avatar ===== */
         let dbPromise = null;
@@ -1203,30 +1402,17 @@
             });
         }
 
-        function hasValidName() { return nameInput.value.trim().length > 0; }
-        function updateProfileNameView() {
-            const value = nameInput.value;
-            profileNameEl.textContent = value.trim() || 'Player';
-        }
-
-        nameInput.addEventListener('input', () => {
-            updateProfileNameView();
-            saveToSettings('playerName', nameInput.value).catch(console.warn);
-        });
-
         (async function initName() {
             try {
                 const saved = await loadFromSettings('playerName');
-                if (saved !== null && saved !== undefined) {
-                    nameInput.value = saved;
+                if (saved && saved.trim().length > 0) {
+                    setNickname(saved.trim());
                 } else {
-                    nameInput.value = 'Player';
-                    await saveToSettings('playerName', 'Player');
+                    setNickname('');
                 }
             } catch (e) {
-                nameInput.value = 'Player';
+                setNickname('');
             }
-            updateProfileNameView();
         })();
 
         /* ===== WebSocket client ===== */
@@ -1277,12 +1463,14 @@
                         roomMinPlayers = data.minPlayers || 2;
                         roomMaxPlayers = data.maxPlayers || roomMaxPlayers;
                         requestRoomsList();
+                        showPlayersView();
                         break;
 
                     case 'joined':
                         currentRoomId = data.room;
                         currentPlayerIndex = data.playerIndex;
                         isHost = false;
+                        showPlayersView();
                         break;
 
                     case 'lobby':
@@ -1415,21 +1603,34 @@
 
                     const actions = document.createElement('div');
                     actions.className = 'player-actions';
-                    const btn = document.createElement('button');
-                    btn.className = 'small-btn';
-                    btn.textContent = 'Msg';
-                    btn.onclick = () => console.log('message', p.index);
-                    actions.appendChild(btn);
+
+                    // только хост может кикать других
+                    if (isHost && p.index !== currentPlayerIndex) {
+                        const kickBtn = document.createElement('button');
+                        kickBtn.className = 'small-btn';
+                        kickBtn.textContent = 'Kick';
+                        kickBtn.onclick = () => {
+                            if (!currentRoomId) return;
+                            sendWS({
+                                type: 'kick',
+                                room: currentRoomId,
+                                targetIndex: p.index
+                            });
+                        };
+                        actions.appendChild(kickBtn);
+                    }
 
                     row.appendChild(avatarDiv);
                     row.appendChild(meta);
-                    row.appendChild(actions);
+                    if (actions.children.length) {
+                        row.appendChild(actions);
+                    }
                     playersContainer.appendChild(row);
                 });
             }
             maxPlayersLabel.textContent = roomMaxPlayers || '4';
 
-            const canStart = isHost && lobbyPlayers.length >= roomMinPlayers && lobbyPlayers.length <= roomMaxPlayers;
+            const canStart = isHost && lobbyPlayers.length === roomMaxPlayers;
             startBtn.disabled = !canStart;
             startBtn.style.opacity = canStart ? '1' : '0.5';
             startBtn.style.cursor = canStart ? 'pointer' : 'default';
@@ -1455,15 +1656,11 @@
         </div>
       `;
                 el.querySelector('.join-server').addEventListener('click', () => {
-                    if (!hasValidName()) {
-                        showAlertBar('Введите никнейм, чтобы присоединиться к игре', 'error');
-                        nameInput.focus();
-                        return;
-                    }
+                    if (!ensureNickname()) return;
                     sendWS({
                         type: 'join',
                         room: s.id,
-                        name: nameInput.value.trim() || 'Player',
+                        name: currentNickname || 'Player',
                         avatar: localAvatarDataUrl || null
                     });
                 });
@@ -1479,20 +1676,18 @@
         });
 
         createBtn.addEventListener('click', () => {
-            if (!hasValidName()) {
-                showAlertBar('Введите никнейм, чтобы создать лобби', 'error');
-                nameInput.focus();
-                return;
-            }
+            if (!ensureNickname()) return;
+
             const pcBtn = document.querySelector('.pc-btn.active');
             const playerCount = pcBtn ? parseInt(pcBtn.dataset.count, 10) : 4;
             roomMaxPlayers = playerCount;
-            roomMinPlayers = 2;
+            roomMinPlayers = playerCount; // ровно столько игроков
+
             const roomId = roomInput.value.trim() || 'room';
             sendWS({
                 type: 'create',
                 room: roomId,
-                name: nameInput.value.trim() || 'Player',
+                name: currentNickname || 'Player',
                 minPlayers: roomMinPlayers,
                 maxPlayers: roomMaxPlayers,
                 avatar: localAvatarDataUrl || null
@@ -1509,18 +1704,28 @@
                 showAlertBar('Только хост может запустить игру', 'error');
                 return;
             }
+            if (lobbyPlayers.length !== roomMaxPlayers) {
+                showAlertBar('Недостаточно игроков для старта', 'error');
+                return;
+            }
             sendWS({ type: 'start', room: currentRoomId });
         });
 
         leaveBtn.addEventListener('click', () => {
-            if (ws && ws.readyState === WebSocket.OPEN) {
+            if (ws && ws.readyState === WebSocket.OPEN && !isSinglePlayer) {
                 ws.close();
             }
             resetRoomClientState();
+            showServersView();
         });
 
         refreshServers.addEventListener('click', () => {
             requestRoomsList();
+        });
+
+        openCreateLobbyBtn.addEventListener('click', () => {
+            if (!ensureNickname()) return;
+            showCreateLobbyView();
         });
 
         /* ===== Virtual keyboard ===== */
@@ -1549,61 +1754,74 @@
         function handleVirtualKey(key) {
             if (!activeField) return;
             if (key === 'BACK') {
-                if (activeField === 'name') {
-                    nameInput.value = nameInput.value.slice(0, -1);
-                    nameInput.dispatchEvent(new Event('input'));
-                } else {
+                if (activeField === 'room') {
                     roomInput.value = roomInput.value.slice(0, -1);
                 }
                 return;
             }
             if (key === 'ENTER') { showKeyboard(false, null); return; }
             if (key === ' ') {
-                if (activeField === 'name') {
-                    nameInput.value += ' ';
-                    nameInput.dispatchEvent(new Event('input'));
-                } else {
+                if (activeField === 'room') {
                     roomInput.value += ' ';
                 }
                 return;
             }
-            if (activeField === 'name') {
-                if (nameInput.value.length < 20) {
-                    nameInput.value += key;
-                    nameInput.dispatchEvent(new Event('input'));
-                }
-            } else {
+            if (activeField === 'room') {
                 if (roomInput.value.length < 20) roomInput.value += key;
             }
         }
 
-        nameInput.addEventListener('focus', () => showKeyboard(true, 'name'));
         roomInput.addEventListener('focus', () => showKeyboard(true, 'room'));
 
         document.addEventListener('click', e => {
-            if (!e.target.closest('.field') && !e.target.closest('.vkb')) {
+            if (!e.target.closest('.field') && !e.target.closest('.vkb') && e.target !== nicknameInput) {
                 showKeyboard(false, null);
-                nameInput.blur(); roomInput.blur();
+                roomInput.blur();
             }
         });
 
-        nameInput.addEventListener('touchstart', e => { e.preventDefault(); nameInput.blur(); showKeyboard(true, 'name'); });
         roomInput.addEventListener('touchstart', e => { e.preventDefault(); roomInput.blur(); showKeyboard(true, 'room'); });
 
-        /* ===== Profile avatar + IndexedDB ===== */
+        /* ===== Profile avatar + nickname in pill ===== */
         const profilePill = document.getElementById('profilePill');
         const profileAvatar = document.getElementById('profileAvatar');
         const avatarInput = document.getElementById('avatarInput');
         const avatarError = document.getElementById('avatarError');
         const uploadAvatarLabel = document.getElementById('uploadAvatarLabel');
+        const profileNameInput = document.getElementById('profileNameInput');
+        const profileNameSaveBtn = document.getElementById('profileNameSaveBtn');
 
         let localAvatarDataUrl = null;
 
         profilePill.addEventListener('click', e => {
-            if (e.target === avatarInput) return;
+            if (e.target === avatarInput || e.target.closest('#uploadAvatarLabel')) return;
+            const willOpen = !profilePill.classList.contains('open');
             profilePill.classList.toggle('open');
+            if (willOpen && profileNameInput) {
+                profileNameInput.value = currentNickname;
+                profileNameInput.focus();
+            }
         });
         uploadAvatarLabel.addEventListener('click', e => e.stopPropagation());
+
+        function saveProfileNickname() {
+            const newNick = (profileNameInput.value || '').trim();
+            if (!newNick) {
+                showAlertBar('Введите никнейм', 'error');
+                return;
+            }
+            setNickname(newNick);
+            profilePill.classList.remove('open');
+            showAlertBar('Никнейм обновлён', 'success');
+        }
+
+        profileNameSaveBtn.addEventListener('click', saveProfileNickname);
+        profileNameInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                saveProfileNickname();
+            }
+        });
 
         const MAX_SIZE = 1024 * 1024;
         avatarInput.addEventListener('change', e => {
@@ -1621,6 +1839,8 @@
                 try {
                     await saveToSettings('avatar', dataUrl);
                     applyAvatar(dataUrl);
+                    profilePill.classList.remove('open');
+                    showAlertBar('Аватар обновлён', 'success');
                 } catch (err) { console.error(err); }
             };
             reader.readAsDataURL(file);
@@ -1666,7 +1886,7 @@
         const LOGICAL_BASE_W = 1000;
         const LOGICAL_BASE_H = 700;
         const BASE_SP = 96;
-        const BASE_DR = 14; // базовый радиус точки
+        const BASE_DR = 14;
 
         const R = 4;
         const STEP_POINTS = 4;
@@ -1687,13 +1907,13 @@
 
         let con = [];
         let tris = [];
-        let edgeOwner = new Map(); // владелец каждого ребра /* <<< */
+        let edgeOwner = new Map();
 
         let sel = null;
         let drag_pos = null;
 
         let turn = 0;
-        let moves = [DEFAULT_MOVES, DEFAULT_MOVES, DEFAULT_MOVES, DEFAULT_MOVES]; // уже не показываем, но оставим для совместимости
+        let moves = [DEFAULT_MOVES, DEFAULT_MOVES, DEFAULT_MOVES, DEFAULT_MOVES];
         let score = [0, 0, 0, 0];
         let game_over = false;
         let winner = null;
@@ -1781,7 +2001,7 @@
             }
         }
 
-        function drawLineLocal(a, b, thickness = LINE_THICKNESS, color = null) { // <<< цвет от игрока
+        function drawLineLocal(a, b, thickness = LINE_THICKNESS, color = null) {
             gctx.beginPath();
             gctx.moveTo(a[0], a[1]);
             gctx.lineTo(b[0], b[1]);
@@ -1804,7 +2024,7 @@
 
         function sortedPair(a, b) { return a < b ? [a, b] : [b, a]; }
 
-        function edgeKey(a, b) { // <<< ключ ребра
+        function edgeKey(a, b) {
             const e = sortedPair(a, b);
             return `${e[0]}-${e[1]}`;
         }
@@ -1871,7 +2091,6 @@
             return found;
         }
 
-        // Есть ли ещё вообще возможные новые ходы (новые рёбра)?
         function hasAnyAvailableMove() {
             const n = pts.length;
             const existingEdges = new Set(con.map(e => edgeKey(e[0], e[1])));
@@ -1924,14 +2143,14 @@
             }
         }
 
-        function isBoardFull() { // доска заполнена: нет ходов и нет свободных триугольников /* <<< */
+        function isBoardFull() {
             updateClaimCandidates();
             const noMovesLeft = !hasAnyAvailableMove();
             const noFreeTriangles = claimCandidates.length === 0;
             return noMovesLeft && noFreeTriangles;
         }
 
-        function checkLocalGameOver() { // только для single player /* <<< */
+        function checkLocalGameOver() {
             if (!isSinglePlayer || game_over) return;
             if (!isBoardFull()) return;
 
@@ -1958,7 +2177,6 @@
             gctx.fillStyle = BG;
             gctx.fillRect(0, 0, gameCanvas.clientWidth, gameCanvas.clientHeight);
 
-            // линии под цвет игрока /* <<< */
             gctx.shadowColor = 'rgba(249,115,22,0.6)';
             gctx.shadowBlur = 5;
             for (const [a, b] of con) {
@@ -1970,7 +2188,6 @@
             gctx.shadowBlur = 0;
             gctx.shadowColor = 'transparent';
 
-            // треугольники – крупнее
             for (const tri of tris) {
                 try {
                     const ptsList = tri.points.map(i => pts[i].pos);
@@ -1989,13 +2206,11 @@
                 }
             }
 
-            // точки – крупнее
             for (const p of pts) {
                 drawHexagonLocal('rgba(15,23,42,1)', p.pos, DR + 8, true);
                 drawHexagonLocal(DOT, p.pos, DR + 3, true);
             }
 
-            // claimRects: только hitbox для клика
             claimRects = [];
             if (claimMode && claimCandidates.length > 0) {
                 for (const c of claimCandidates) {
@@ -2028,7 +2243,7 @@
             drawFrame(sel, drag_pos);
         }
 
-        function updateGameHUD() { // подсветка хода + без Moves /* <<< */
+        function updateGameHUD() {
             const n = Math.max(
                 playerNames ? playerNames.length : 0,
                 score.length
@@ -2209,7 +2424,7 @@
             drawImmediate();
         }
 
-        function showWinnerOverlay() { // итоги: 1,2,3 место + 4 просто очки /* <<< */
+        function showWinnerOverlay() {
             const n = Math.max(
                 playerNames && playerNames.length ? playerNames.length : 0,
                 score && score.length ? score.length : 0
@@ -2239,7 +2454,7 @@
             }
 
             winnerEmojiEl.textContent = '🏆';
-            winnerTitleEl.textContent = 'ИТОГИ ИГРЫ';
+            winnerTitleEl.textContent = 'WINNER';
             winnerNameLabel.textContent = `1 место: ${first.name} — ${first.score}`;
 
             const lines = [];
@@ -2291,7 +2506,7 @@
 
         winnerSkipBtn.addEventListener('click', backToMainFromWinner);
 
-        function handleGameOver(data) { // онлайн: сервер сказал game_over -> показываем итоги /* <<< */
+        function handleGameOver(data) {
             game_over = true;
             if (Array.isArray(data.score)) {
                 score = data.score.slice();
@@ -2318,7 +2533,7 @@
             };
         }
 
-        function localAcceptClaims(triangles) { // только начисляет очки, ход не меняет /* <<< */
+        function localAcceptClaims(triangles) {
             const edgesSet = new Set(con.map(e => edgeKey(e[0], e[1])));
             const existing = new Set(tris.map(t => triKeyFromPoints(t.points)));
             const accepted = [];
@@ -2353,7 +2568,7 @@
             drawImmediate();
         }
 
-        function applyLocalMoveFromPath(path, options = {}) { // каждый ход требует End turn /* <<< */
+        function applyLocalMoveFromPath(path, options = {}) {
             const { autoClaim = false } = options;
 
             if (!Array.isArray(path) || path.length < 2) return false;
@@ -2375,10 +2590,9 @@
 
             updateClaimCandidates();
 
-            // после каждого хода включаем режим claim (если есть треугольники — можно забирать, если нет — всё равно нужно нажать End turn)
-            claimMode = true;
+            const hasTrisAfterMove = claimCandidates.length > 0;
+            claimMode = hasTrisAfterMove;
 
-            // для бота можно сразу автоклеймить
             if (autoClaim && claimCandidates.length > 0) {
                 const triangles = claimCandidates.map(c => c.points);
                 localAcceptClaims(triangles);
@@ -2387,10 +2601,15 @@
             updateGameHUD();
             drawImmediate();
 
+            // если нет треугольников — автоматический end turn (single player / локальный)
+            if (!hasTrisAfterMove && isSinglePlayer) {
+                localEndTurn();
+            }
+
             return true;
         }
 
-        function localEndTurn(options = {}) { // завершение хода (single player и оффлайн) /* <<< */
+        function localEndTurn(options = {}) {
             if (!gameStarted || game_over) return;
 
             claimMode = false;
@@ -2426,7 +2645,7 @@
             }, 400);
         }
 
-        function botMakeMove() { // бот ходит и потом сам жмёт End turn (через localEndTurn) /* <<< */
+        function botMakeMove() {
             if (!isSinglePlayer || game_over || !gameStarted) return;
 
             const botIndex = 1;
@@ -2595,15 +2814,17 @@
                                 edgeOwner.set(edgeKey(e[0], e[1]), turn);
                             }
 
-                            const hypotheticalEdges = con.slice();
-                            const raw = find_triangles_from_edges(hypotheticalEdges);
-                            const existing = new Set(tris.map(t => triKeyFromPoints(t.points)));
-                            const newCandidates = raw.filter(t => !existing.has(triKeyFromPoints(t)));
+                            updateClaimCandidates();
+                            const hasTrisAfterMove = claimCandidates.length > 0;
+                            claimMode = hasTrisAfterMove;
 
                             sendWS({ type: 'make_move', room: currentRoomId, path });
 
-                            claimMode = true;
-                            updateClaimCandidates();
+                            // если нет треугольников — автоматически end turn (онлайн)
+                            if (!hasTrisAfterMove) {
+                                sendWS({ type: 'end_turn', room: currentRoomId });
+                                endTurnBtn.disabled = true;
+                            }
                         } else {
                             applyLocalMoveFromPath(path, { autoClaim: false });
                         }
@@ -2633,7 +2854,7 @@
         });
 
         if (endTurnBtn) {
-            endTurnBtn.addEventListener('click', () => { // теперь после КАЖДОГО хода нужно жать End turn /* <<< */
+            endTurnBtn.addEventListener('click', () => {
                 if (!gameStarted || game_over) return;
 
                 if (isSinglePlayer || !currentRoomId || !wsConnected) {
@@ -2672,6 +2893,8 @@
 
         /* ===== Single Player vs Bot ===== */
         function startSinglePlayerGame() {
+            if (!ensureNickname()) return;
+
             isSinglePlayer = true;
 
             if (ws && ws.readyState === WebSocket.OPEN) {
@@ -2692,7 +2915,7 @@
             animating = false;
             gameStarted = true;
 
-            const playerName = nameInput.value.trim() || 'Player';
+            const playerName = currentNickname || 'Player';
             playerNames = [playerName, 'Bot'];
             playerAvatars = [localAvatarDataUrl || null, null];
 
