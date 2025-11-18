@@ -705,7 +705,13 @@
             padding: 10px 14px;
             font-size: 13px;
             background: linear-gradient(135deg, #0f172a, #1d3655);
+            border-color: rgba(148, 163, 184, 0.5); /* без постоянной подсветки */ /* <<< */
+        }
+
+        /* Подсветка того игрока, чей ход */ /* <<< */
+        .game-player-card.turn {
             border-color: rgba(96, 165, 250, 0.9);
+            box-shadow: 0 12px 28px rgba(37, 99, 235, 0.6);
         }
 
         .badge-pill {
@@ -875,7 +881,7 @@
                 </div>
             </div>
 
-            <button class="howto-pill">How to play?</button>
+            <!-- Кнопка How to play убрана --> <!-- <<< -->
         </div>
 
         <div class="logo">
@@ -927,19 +933,7 @@
                 </div>
             </div>
 
-            <div id="subPanel" class="mode-card mode-pass">
-                <div class="mode-header">Subscription</div>
-                <div class="mode-body">
-                    <div class="mode-title" style="font-size:20px;">BUY SUBSCRIPTION</div>
-                    <div class="mode-sub">PLAY WITHOUT ADS</div>
-
-                    <div class="mode-footer">
-                        <span class="mode-pill" style="padding:6px 20px;font-size:12px;">
-                            BUY
-                        </span>
-                    </div>
-                </div>
-            </div>
+            <!-- Subscription блок убран --> <!-- <<< -->
         </div>
     </div>
 
@@ -1071,7 +1065,6 @@
         const lobbyWrap = document.getElementById('lobbyWrap');
         const gameScreen = document.getElementById('gameScreen');
         const playPanel = document.getElementById('playPanel');
-        const subPanel = document.getElementById('subPanel');
         const singlePanel = document.getElementById('singlePanel');
 
         playPanel.addEventListener('click', () => {
@@ -1091,10 +1084,6 @@
             mainMenu.style.display = 'flex';
             stopRoomsAutoRefresh();
             window.scrollTo(0, 0);
-        });
-
-        subPanel.addEventListener('click', () => {
-            alert('Open subscription purchase flow');
         });
 
         singlePanel.addEventListener('click', () => {
@@ -1632,11 +1621,13 @@
 
         let con = [];
         let tris = [];
+        let edgeOwner = new Map(); // владелец каждого ребра /* <<< */
+
         let sel = null;
         let drag_pos = null;
 
         let turn = 0;
-        let moves = [DEFAULT_MOVES, DEFAULT_MOVES, DEFAULT_MOVES, DEFAULT_MOVES];
+        let moves = [DEFAULT_MOVES, DEFAULT_MOVES, DEFAULT_MOVES, DEFAULT_MOVES]; // уже не показываем, но оставим для совместимости
         let score = [0, 0, 0, 0];
         let game_over = false;
         let winner = null;
@@ -1724,18 +1715,17 @@
             }
         }
 
-        function drawLineLocal(a, b, thickness = LINE_THICKNESS) {
+        function drawLineLocal(a, b, thickness = LINE_THICKNESS, color = null) { // <<< цвет от игрока
             gctx.beginPath();
             gctx.moveTo(a[0], a[1]);
             gctx.lineTo(b[0], b[1]);
             gctx.lineWidth = thickness;
-            gctx.strokeStyle = LINE_COLOR;
+            gctx.strokeStyle = color || LINE_COLOR;
             gctx.lineCap = 'round';
             gctx.stroke();
         }
 
         function nearScaled(pos) {
-            // щедрый хитбокс — удобнее тапать
             const hitR = Math.max(DR * 2, Math.round(SP * 0.4));
             for (let i = 0; i < pts.length; i++) {
                 const p = pts[i].pos;
@@ -1747,6 +1737,11 @@
         }
 
         function sortedPair(a, b) { return a < b ? [a, b] : [b, a]; }
+
+        function edgeKey(a, b) { // <<< ключ ребра
+            const e = sortedPair(a, b);
+            return `${e[0]}-${e[1]}`;
+        }
 
         function line_ok_scaled(a, b) {
             const p1 = pts[a], p2 = pts[b];
@@ -1778,13 +1773,13 @@
 
         function find_triangles_local_scaled() {
             const found = [];
-            const edgesSet = new Set(con.map(e => `${e[0]}-${e[1]}`));
+            const edgesSet = new Set(con.map(e => edgeKey(e[0], e[1])));
             const n = pts.length;
             for (let a = 0; a < n; a++) {
                 for (let b = a + 1; b < n; b++) {
-                    if (!edgesSet.has(`${a}-${b}`)) continue;
+                    if (!edgesSet.has(edgeKey(a, b))) continue;
                     for (let c = b + 1; c < n; c++) {
-                        if (edgesSet.has(`${b}-${c}`) && edgesSet.has(`${a}-${c}`)) {
+                        if (edgesSet.has(edgeKey(b, c)) && edgesSet.has(edgeKey(a, c))) {
                             found.push([a, b, c]);
                         }
                     }
@@ -1795,13 +1790,13 @@
 
         function find_triangles_from_edges(edgesList) {
             const found = [];
-            const edgesSet = new Set(edgesList.map(e => `${e[0]}-${e[1]}`));
+            const edgesSet = new Set(edgesList.map(e => edgeKey(e[0], e[1])));
             const n = pts.length;
             for (let a = 0; a < n; a++) {
                 for (let b = a + 1; b < n; b++) {
-                    if (!edgesSet.has(`${a}-${b}`)) continue;
+                    if (!edgesSet.has(edgeKey(a, b))) continue;
                     for (let c = b + 1; c < n; c++) {
-                        if (edgesSet.has(`${b}-${c}`) && edgesSet.has(`${a}-${c}`)) {
+                        if (edgesSet.has(edgeKey(b, c)) && edgesSet.has(edgeKey(a, c))) {
                             found.push([a, b, c]);
                         }
                     }
@@ -1813,14 +1808,14 @@
         // Есть ли ещё вообще возможные новые ходы (новые рёбра)?
         function hasAnyAvailableMove() {
             const n = pts.length;
-            const existingEdges = new Set(con.map(e => `${e[0]}-${e[1]}`));
+            const existingEdges = new Set(con.map(e => edgeKey(e[0], e[1])));
             for (let a = 0; a < n; a++) {
                 for (let b = a + 1; b < n; b++) {
                     const path = line_ok_scaled(a, b);
                     if (path.length === STEP_POINTS) {
                         for (let k = 0; k < path.length - 1; k++) {
                             const e = sortedPair(path[k], path[k + 1]);
-                            const key = `${e[0]}-${e[1]}`;
+                            const key = edgeKey(e[0], e[1]);
                             if (!existingEdges.has(key)) {
                                 return true;
                             }
@@ -1863,6 +1858,23 @@
             }
         }
 
+        function isBoardFull() { // доска заполнена: нет ходов и нет свободных триугольников /* <<< */
+            updateClaimCandidates();
+            const noMovesLeft = !hasAnyAvailableMove();
+            const noFreeTriangles = claimCandidates.length === 0;
+            return noMovesLeft && noFreeTriangles;
+        }
+
+        function checkLocalGameOver() { // только для single player /* <<< */
+            if (!isSinglePlayer || game_over) return;
+            if (!isBoardFull()) return;
+
+            game_over = true;
+            showWinnerOverlay();
+            updateGameHUD();
+            drawImmediate();
+        }
+
         async function animateTriangleCentersScaled(new_tris_list) {
             animating = true;
             const temp = [];
@@ -1880,12 +1892,14 @@
             gctx.fillStyle = BG;
             gctx.fillRect(0, 0, gameCanvas.clientWidth, gameCanvas.clientHeight);
 
-            gctx.lineWidth = LINE_THICKNESS;
-            gctx.strokeStyle = LINE_COLOR;
+            // линии под цвет игрока /* <<< */
             gctx.shadowColor = 'rgba(249,115,22,0.6)';
             gctx.shadowBlur = 5;
             for (const [a, b] of con) {
-                drawLineLocal(pts[a].pos, pts[b].pos, LINE_THICKNESS);
+                const key = edgeKey(a, b);
+                const owner = edgeOwner.has(key) ? edgeOwner.get(key) : null;
+                const color = owner != null ? (PLAYERS_COLORS[owner] || LINE_COLOR) : LINE_COLOR;
+                drawLineLocal(pts[a].pos, pts[b].pos, LINE_THICKNESS, color);
             }
             gctx.shadowBlur = 0;
             gctx.shadowColor = 'transparent';
@@ -1915,13 +1929,12 @@
                 drawHexagonLocal(DOT, p.pos, DR + 3, true);
             }
 
-            // claimRects: ТОЛЬКО hitbox, без визуала (полностью прозрачные)
+            // claimRects: только hitbox для клика
             claimRects = [];
             if (claimMode && claimCandidates.length > 0) {
                 for (const c of claimCandidates) {
                     const center = c.center;
                     const r = Math.round(28 * gScale);
-                    // ничего не рисуем, только прямоугольник для клика
                     claimRects.push({
                         x: center[0] - r,
                         y: center[1] - r,
@@ -1938,7 +1951,7 @@
                 gctx.strokeStyle = '#facc15';
                 gctx.shadowColor = 'rgba(250,204,21,0.7)';
                 gctx.shadowBlur = 10;
-                drawLineLocal(pts[sel_local].pos, dragPos, LINE_THICKNESS);
+                drawLineLocal(pts[sel_local].pos, dragPos, LINE_THICKNESS, '#facc15');
                 gctx.setLineDash([]);
                 gctx.shadowBlur = 0;
                 gctx.shadowColor = 'transparent';
@@ -1949,10 +1962,9 @@
             drawFrame(sel, drag_pos);
         }
 
-        function updateGameHUD() {
+        function updateGameHUD() { // подсветка хода + без Moves /* <<< */
             const n = Math.max(
                 playerNames ? playerNames.length : 0,
-                moves.length,
                 score.length
             );
             if (n === 0) return;
@@ -1969,18 +1981,20 @@
             const meIdx = (currentPlayerIndex != null && currentPlayerIndex < n) ? currentPlayerIndex : 0;
             const me = players[meIdx];
 
-            const meCard = document.createElement('div');
-            meCard.className = 'game-player-card me';
             const myScore = score[meIdx] || 0;
-            const myMoves = moves[meIdx] || 0;
             const isMyTurn = (turn === meIdx && !game_over);
+
+            const meCard = document.createElement('div');
+            const meClasses = ['game-player-card', 'me'];
+            if (isMyTurn) meClasses.push('turn');
+            meCard.className = meClasses.join(' ');
 
             meCard.innerHTML = `
       <div class="avatar-circle"></div>
       <div class="game-player-meta">
         <div class="game-player-label">${isMyTurn ? 'Your turn' : 'You'}</div>
         <div class="game-player-name">${me.name}</div>
-        <div class="game-player-label">Score: ${myScore} • Moves: ${myMoves}</div>
+        <div class="game-player-label">Score: ${myScore}</div>
       </div>
     `;
             gameBottomPlayer.appendChild(meCard);
@@ -1988,21 +2002,25 @@
             players.forEach(p => {
                 if (p.index === meIdx) return;
                 const sc = score[p.index] || 0;
-                const mv = moves[p.index] || 0;
                 const card = document.createElement('div');
-                card.className = 'game-player-card';
+                const classes = ['game-player-card'];
+                if (!game_over && turn === p.index) classes.push('turn');
+                card.className = classes.join(' ');
                 card.innerHTML = `
         <div class="avatar-circle"></div>
         <div class="game-player-meta">
           <div class="game-player-name">${p.name}</div>
-          <div class="game-player-label">Score: ${sc} • Moves: ${mv}</div>
+          <div class="game-player-label">Score: ${sc}</div>
         </div>
       `;
                 gameTopPlayers.appendChild(card);
             });
 
             if (endTurnBtn) {
-                const canEnd = !game_over && claimMode && claimCandidates.length > 0 && currentPlayerIndex === turn;
+                let canEnd = !game_over && gameStarted;
+                if (currentRoomId && wsConnected && !isSinglePlayer) {
+                    canEnd = canEnd && currentPlayerIndex === turn;
+                }
                 endTurnBtn.disabled = !canEnd;
             }
         }
@@ -2022,6 +2040,7 @@
 
             con = [];
             tris = [];
+            edgeOwner.clear();
 
             score = Array.isArray(data.score) ? data.score.slice() : [0, 0, 0, 0];
             moves = Array.isArray(data.moves) ? data.moves.slice() : [DEFAULT_MOVES, DEFAULT_MOVES, DEFAULT_MOVES, DEFAULT_MOVES];
@@ -2058,8 +2077,30 @@
 
         function handleStateUpdate(data) {
             try {
-                con = (data.con || []).map(pair => [pair[0], pair[1]]);
-            } catch (e) { con = []; }
+                edgeOwner.clear();
+                con = [];
+                (data.con || []).forEach(item => {
+                    if (Array.isArray(item)) {
+                        const a = item[0];
+                        const b = item[1];
+                        const owner = item.length > 2 ? item[2] : null;
+                        con.push([a, b]);
+                        if (owner != null) edgeOwner.set(edgeKey(a, b), owner);
+                    } else if (item && typeof item === 'object') {
+                        const a = item.a;
+                        const b = item.b;
+                        if (typeof a === 'number' && typeof b === 'number') {
+                            con.push([a, b]);
+                            if (typeof item.owner === 'number') {
+                                edgeOwner.set(edgeKey(a, b), item.owner);
+                            }
+                        }
+                    }
+                });
+            } catch (e) {
+                con = [];
+                edgeOwner.clear();
+            }
 
             if (Array.isArray(data.tris)) {
                 tris = data.tris.map(tr => ({ points: tr.points.slice(), owner: tr.owner }));
@@ -2094,12 +2135,6 @@
             waiting_for_server = false;
 
             updateClaimCandidates();
-
-            if (claimMode && currentRoomId && wsConnected && currentPlayerIndex === turn && claimCandidates.length === 0) {
-                waiting_for_server = true;
-                sendWS({ type: 'end_turn', room: currentRoomId });
-                claimMode = false;
-            }
             if (turn !== currentPlayerIndex) {
                 claimMode = false;
             }
@@ -2108,19 +2143,53 @@
             drawImmediate();
         }
 
-        function showWinnerOverlay(name, emoji = '🏆', avatarUrl = null) {
-            winnerEmojiEl.textContent = emoji;
-            winnerTitleEl.textContent = 'WINNER';
-            winnerNameLabel.textContent = name || 'Player';
-            winnerSubtitleEl.textContent = 'Nice triangles!';
-            winnerCountdownValue = 10;
-            winnerCountdownEl.textContent = `Returning to main menu in ${winnerCountdownValue}…`;
+        function showWinnerOverlay() { // итоги: 1,2,3 место + 4 просто очки /* <<< */
+            const n = Math.max(
+                playerNames && playerNames.length ? playerNames.length : 0,
+                score && score.length ? score.length : 0
+            );
+            if (!n) return;
 
-            if (avatarUrl) {
-                winnerAvatarEl.style.backgroundImage = `url(${avatarUrl})`;
+            const players = [];
+            for (let i = 0; i < n; i++) {
+                const name = (playerNames && playerNames[i]) ? playerNames[i] : `Player ${i + 1}`;
+                const pts = (score && typeof score[i] === 'number') ? score[i] : 0;
+                const avatar = (playerAvatars && playerAvatars[i]) ? playerAvatars[i] : null;
+                players.push({ index: i, name, score: pts, avatar });
+            }
+
+            players.sort((a, b) => b.score - a.score);
+
+            const first = players[0];
+            let firstAvatar = first.avatar;
+            if (!firstAvatar && first.index === currentPlayerIndex && localAvatarDataUrl) {
+                firstAvatar = localAvatarDataUrl;
+            }
+
+            if (firstAvatar) {
+                winnerAvatarEl.style.backgroundImage = `url(${firstAvatar})`;
             } else {
                 winnerAvatarEl.style.backgroundImage = '';
             }
+
+            winnerEmojiEl.textContent = '🏆';
+            winnerTitleEl.textContent = 'ИТОГИ ИГРЫ';
+            winnerNameLabel.textContent = `1 место: ${first.name} — ${first.score}`;
+
+            const lines = [];
+            if (players[1]) {
+                lines.push(`2 место: ${players[1].name} — ${players[1].score}`);
+            }
+            if (players[2]) {
+                lines.push(`3 место: ${players[2].name} — ${players[2].score}`);
+            }
+            if (players[3]) {
+                lines.push(`${players[3].name}: ${players[3].score}`);
+            }
+            winnerSubtitleEl.innerHTML = lines.join('<br>');
+
+            winnerCountdownValue = 10;
+            winnerCountdownEl.textContent = `Returning to main menu in ${winnerCountdownValue}…`;
 
             if (winnerCountdownTimer) clearTimeout(winnerCountdownTimer);
             if (winnerCountdownInterval) clearInterval(winnerCountdownInterval);
@@ -2156,25 +2225,21 @@
 
         winnerSkipBtn.addEventListener('click', backToMainFromWinner);
 
-        function handleGameOver(data) {
+        function handleGameOver(data) { // онлайн: сервер сказал game_over -> показываем итоги /* <<< */
             game_over = true;
-            winner = data.winner;
-
-            let winnerName = data.winnerName || null;
-            if (!winnerName && typeof data.winner === 'number' && playerNames[data.winner]) {
-                winnerName = playerNames[data.winner];
+            if (Array.isArray(data.score)) {
+                score = data.score.slice();
             }
-
-            let avatarUrl = null;
-            if (data.winnerAvatar) {
-                avatarUrl = data.winnerAvatar;
-            } else if (typeof data.winner === 'number' && playerAvatars[data.winner]) {
-                avatarUrl = playerAvatars[data.winner];
-            } else if (typeof data.winner === 'number' && data.winner === currentPlayerIndex && localAvatarDataUrl) {
-                avatarUrl = localAvatarDataUrl;
+            if (Array.isArray(data.players)) {
+                const maxIdx = Math.max(...data.players.map(p => p.index));
+                playerNames = Array(maxIdx + 1).fill(null);
+                playerAvatars = Array(maxIdx + 1).fill(null);
+                data.players.forEach(p => {
+                    playerNames[p.index] = p.name;
+                    playerAvatars[p.index] = p.avatar || null;
+                });
             }
-
-            showWinnerOverlay(winnerName || 'Player', data.emoji || '🏆', avatarUrl);
+            showWinnerOverlay();
             updateGameHUD();
             drawImmediate();
         }
@@ -2187,106 +2252,8 @@
             };
         }
 
-        // ==== НОВЫЕ ПРАВИЛА ЗАВЕРШЕНИЯ ИГРЫ В SINGLE PLAYER ====
-        function checkLocalGameOver() {
-            if (!isSinglePlayer || game_over) return;
-
-            const numPlayers = moves.length;
-            if (numPlayers < 2) return;
-
-            const s0 = score[0] || 0;
-            const s1 = score[1] || 0;
-            const targetScore = 15;
-
-            // 2 игрока: игра заканчивается при достижении 15 очков
-            if (numPlayers === 2) {
-                // кто-то добрался до 15
-                if (s0 >= targetScore || s1 >= targetScore) {
-                    let winnerIndex = null;
-                    if (s0 > s1) winnerIndex = 0;
-                    else if (s1 > s0) winnerIndex = 1;
-                    else winnerIndex = null;
-
-                    game_over = true;
-
-                    if (winnerIndex === null) {
-                        showWinnerOverlay('Ничья', '🤝', null);
-                        updateGameHUD();
-                        drawImmediate();
-                    } else {
-                        const data = {
-                            winner: winnerIndex,
-                            winnerName: playerNames[winnerIndex],
-                            winnerAvatar: winnerIndex === 0 ? (localAvatarDataUrl || null) : null,
-                            emoji: winnerIndex === 0 ? '🏆' : '🤖'
-                        };
-                        handleGameOver(data);
-                    }
-                    return;
-                }
-
-                // если ходов нет и/или доска забита — побеждает тот, у кого больше очков
-                const noMovesLeft = (moves[0] <= 0 && moves[1] <= 0);
-                const noPossibleMoves = !hasAnyAvailableMove();
-
-                if (!noMovesLeft && !noPossibleMoves) return;
-
-                let winnerIndex = null;
-                if (s0 > s1) winnerIndex = 0;
-                else if (s1 > s0) winnerIndex = 1;
-                else winnerIndex = null;
-
-                game_over = true;
-
-                if (winnerIndex === null) {
-                    showWinnerOverlay('Ничья', '🤝', null);
-                    updateGameHUD();
-                    drawImmediate();
-                } else {
-                    const data = {
-                        winner: winnerIndex,
-                        winnerName: playerNames[winnerIndex],
-                        winnerAvatar: winnerIndex === 0 ? (localAvatarDataUrl || null) : null,
-                        emoji: winnerIndex === 0 ? '🏆' : '🤖'
-                    };
-                    handleGameOver(data);
-                }
-                return;
-            }
-
-            // на будущее: 3-4 игрока в локальном режиме -> победитель после заполнения доски
-            if (!hasAnyAvailableMove()) {
-                let bestScore = -Infinity;
-                let best = [];
-                for (let i = 0; i < numPlayers; i++) {
-                    const s = score[i] || 0;
-                    if (s > bestScore) {
-                        bestScore = s;
-                        best = [i];
-                    } else if (s === bestScore) {
-                        best.push(i);
-                    }
-                }
-                game_over = true;
-                if (best.length !== 1) {
-                    showWinnerOverlay('Ничья', '🤝', null);
-                    updateGameHUD();
-                    drawImmediate();
-                } else {
-                    const w = best[0];
-                    const data = {
-                        winner: w,
-                        winnerName: playerNames[w],
-                        winnerAvatar: w === 0 ? (localAvatarDataUrl || null) : null,
-                        emoji: '🏆'
-                    };
-                    handleGameOver(data);
-                }
-            }
-        }
-
-        function localAcceptClaims(triangles) {
-            const edgesSet = new Set(con.map(e => `${e[0]}-${e[1]}`));
+        function localAcceptClaims(triangles) { // только начисляет очки, ход не меняет /* <<< */
+            const edgesSet = new Set(con.map(e => edgeKey(e[0], e[1])));
             const existing = new Set(tris.map(t => triKeyFromPoints(t.points)));
             const accepted = [];
             for (const tri of triangles) {
@@ -2301,7 +2268,9 @@
                     accepted.push(tri.slice());
                 }
             }
-            if (accepted.length) score[turn] = (score[turn] || 0) + accepted.length;
+            if (accepted.length) {
+                score[turn] = (score[turn] || 0) + accepted.length;
+            }
 
             updateClaimCandidates();
 
@@ -2310,24 +2279,15 @@
                 center: tri_center_scaled([pts[t[0]].pos, pts[t[1]].pos, pts[t[2]].pos]),
                 color: PLAYERS_COLORS[turn]
             }));
-            if (new_tris_for_anim.length) animateTriangleCentersScaled(new_tris_for_anim);
-
-            if (claimCandidates.length === 0) {
-                claimMode = false;
-                turn = (turn + 1) % moves.length;
+            if (new_tris_for_anim.length) {
+                animateTriangleCentersScaled(new_tris_for_anim);
             }
+
             updateGameHUD();
             drawImmediate();
-
-            if (isSinglePlayer) {
-                checkLocalGameOver();
-                if (!game_over && turn === 1) {
-                    scheduleBotMove();
-                }
-            }
         }
 
-        function applyLocalMoveFromPath(path, options = {}) {
+        function applyLocalMoveFromPath(path, options = {}) { // каждый ход требует End turn /* <<< */
             const { autoClaim = false } = options;
 
             if (!Array.isArray(path) || path.length < 2) return false;
@@ -2339,6 +2299,7 @@
                 if (!con.find(e => e[0] === edge[0] && e[1] === edge[1])) {
                     con.push(edge);
                     newEdges.push(edge);
+                    edgeOwner.set(edgeKey(edge[0], edge[1]), turn);
                 }
             }
 
@@ -2346,34 +2307,45 @@
                 return false;
             }
 
-            if (typeof moves[turn] !== 'number') moves[turn] = DEFAULT_MOVES;
-            moves[turn] = Math.max(0, (moves[turn] || 0) - 1);
-
             updateClaimCandidates();
 
-            if (claimCandidates.length === 0) {
-                claimMode = false;
-                turn = (turn + 1) % moves.length;
-                updateGameHUD();
-                drawImmediate();
-                if (isSinglePlayer) {
-                    checkLocalGameOver();
-                    if (!game_over && turn === 1) {
-                        scheduleBotMove();
-                    }
-                }
-            } else {
-                if (autoClaim) {
-                    const triangles = claimCandidates.map(c => c.points);
-                    localAcceptClaims(triangles);
-                } else {
-                    claimMode = true;
-                    updateGameHUD();
-                    drawImmediate();
-                }
+            // после каждого хода включаем режим claim (если есть треугольники — можно забирать, если нет — всё равно нужно нажать End turn)
+            claimMode = true;
+
+            // для бота можно сразу автоклеймить
+            if (autoClaim && claimCandidates.length > 0) {
+                const triangles = claimCandidates.map(c => c.points);
+                localAcceptClaims(triangles);
             }
 
+            updateGameHUD();
+            drawImmediate();
+
             return true;
+        }
+
+        function localEndTurn(options = {}) { // завершение хода (single player и оффлайн) /* <<< */
+            if (!gameStarted || game_over) return;
+
+            claimMode = false;
+
+            checkLocalGameOver();
+            if (game_over) return;
+
+            const numPlayers = playerNames && playerNames.length ? playerNames.length : score.length;
+            if (!numPlayers) return;
+
+            turn = (turn + 1) % numPlayers;
+
+            updateGameHUD();
+            drawImmediate();
+
+            if (isSinglePlayer) {
+                const fromBot = options.fromBot === true;
+                if (!fromBot && turn === 1) {
+                    scheduleBotMove();
+                }
+            }
         }
 
         function scheduleBotMove() {
@@ -2388,14 +2360,14 @@
             }, 400);
         }
 
-        function botMakeMove() {
+        function botMakeMove() { // бот ходит и потом сам жмёт End turn (через localEndTurn) /* <<< */
             if (!isSinglePlayer || game_over || !gameStarted) return;
 
             const botIndex = 1;
             if (turn !== botIndex) return;
 
             const n = pts.length;
-            const existingEdges = new Set(con.map(e => `${e[0]}-${e[1]}`));
+            const existingEdges = new Set(con.map(e => edgeKey(e[0], e[1])));
             const candidatePaths = [];
 
             for (let a = 0; a < n; a++) {
@@ -2406,7 +2378,7 @@
                         let hasNew = false;
                         for (let k = 0; k < path.length - 1; k++) {
                             const e = sortedPair(path[k], path[k + 1]);
-                            const key = `${e[0]}-${e[1]}`;
+                            const key = edgeKey(e[0], e[1]);
                             if (!existingEdges.has(key)) {
                                 hasNew = true;
                                 newEdges.push(e);
@@ -2420,11 +2392,7 @@
             }
 
             if (!candidatePaths.length) {
-                moves[botIndex] = 0;
-                turn = 0;
-                updateGameHUD();
-                drawImmediate();
-                checkLocalGameOver();
+                localEndTurn({ fromBot: true });
                 return;
             }
 
@@ -2449,7 +2417,12 @@
             }
 
             const choice = best[Math.floor(Math.random() * best.length)];
-            applyLocalMoveFromPath(choice.path, { autoClaim: true });
+            const moved = applyLocalMoveFromPath(choice.path, { autoClaim: true });
+            if (moved) {
+                localEndTurn({ fromBot: true });
+            } else {
+                localEndTurn({ fromBot: true });
+            }
         }
 
         function handlePointerDown(ev) {
@@ -2464,16 +2437,11 @@
             drag_pos = null;
 
             if (claimMode) {
-                // выбор треугольников идёт через pointerup по claimRects
                 sel = null;
                 return;
             }
 
             if (currentRoomId && wsConnected && !isSinglePlayer && currentPlayerIndex !== turn) {
-                return;
-            }
-
-            if ((score[turn] >= 15 && isSinglePlayer && moves.length === 2) || (moves[turn] <= 0)) {
                 return;
             }
 
@@ -2538,13 +2506,6 @@
                 return;
             }
 
-            if ((score[turn] >= 15 && isSinglePlayer && moves.length === 2) || (moves[turn] <= 0)) {
-                sel = null;
-                drag_pos = null;
-                drawImmediate();
-                return;
-            }
-
             const startIndex = sel;
             const endIndex = nearScaled([mx, my]);
 
@@ -2563,7 +2524,10 @@
                     if (newEdges.length > 0) {
                         if (currentRoomId && wsConnected && !isSinglePlayer) {
                             waiting_for_server = true;
-                            for (const e of newEdges) con.push(e);
+                            for (const e of newEdges) {
+                                con.push(e);
+                                edgeOwner.set(edgeKey(e[0], e[1]), turn);
+                            }
 
                             const hypotheticalEdges = con.slice();
                             const raw = find_triangles_from_edges(hypotheticalEdges);
@@ -2572,13 +2536,8 @@
 
                             sendWS({ type: 'make_move', room: currentRoomId, path });
 
-                            if (newCandidates.length === 0) {
-                                sendWS({ type: 'end_turn', room: currentRoomId });
-                                claimMode = false;
-                            } else {
-                                claimMode = true;
-                                updateClaimCandidates();
-                            }
+                            claimMode = true;
+                            updateClaimCandidates();
                         } else {
                             applyLocalMoveFromPath(path, { autoClaim: false });
                         }
@@ -2608,29 +2567,21 @@
         });
 
         if (endTurnBtn) {
-            endTurnBtn.addEventListener('click', () => {
+            endTurnBtn.addEventListener('click', () => { // теперь после КАЖДОГО хода нужно жать End turn /* <<< */
                 if (!gameStarted || game_over) return;
 
-                // ЛОКАЛЬНЫЙ / SINGLE PLAYER: больше НЕ автоклеймим все треугольники
-                if (!currentRoomId || !wsConnected || isSinglePlayer) {
-                    // просто заканчиваем фазу claim (если была) и передаём ход
-                    claimMode = false;
-                    turn = (turn + 1) % moves.length;
-                    updateGameHUD();
-                    drawImmediate();
-                    if (isSinglePlayer) {
-                        checkLocalGameOver();
-                        if (!game_over && turn === 1) {
-                            scheduleBotMove();
-                        }
-                    }
+                if (isSinglePlayer || !currentRoomId || !wsConnected) {
+                    localEndTurn();
                     return;
                 }
 
-                // онлайн-игра
+                if (currentPlayerIndex !== turn) {
+                    return;
+                }
+
                 waiting_for_server = true;
-                sendWS({ type: 'end_turn', room: currentRoomId });
                 claimMode = false;
+                sendWS({ type: 'end_turn', room: currentRoomId });
                 endTurnBtn.disabled = true;
             });
         }
@@ -2665,6 +2616,7 @@
 
             con = [];
             tris = [];
+            edgeOwner.clear();
             claimMode = false;
             claimCandidates = [];
             claimRects = [];
