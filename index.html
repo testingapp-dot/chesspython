@@ -696,19 +696,22 @@
         }
 
         .game-player-label {
-            font-size: 10px;
+            font-size: 15px;
             color: var(--muted);
         }
 
         .game-player-card.me {
             align-self: flex-end;
             padding: 10px 14px;
-            font-size: 13px;
+            font-size: 14px;
             background: linear-gradient(135deg, #0f172a, #1d3655);
-            border-color: rgba(148, 163, 184, 0.5); /* без постоянной подсветки */ /* <<< */
+            border-color: rgba(148, 163, 184, 0.5);
+            /* без постоянной подсветки */
+            /* <<< */
         }
 
-        /* Подсветка того игрока, чей ход */ /* <<< */
+        /* Подсветка того игрока, чей ход */
+        /* <<< */
         .game-player-card.turn {
             border-color: rgba(96, 165, 250, 0.9);
             box-shadow: 0 12px 28px rgba(37, 99, 235, 0.6);
@@ -836,6 +839,45 @@
             box-shadow: 0 10px 26px rgba(34, 197, 94, 0.5);
         }
 
+        .alert-bar {
+            position: fixed;
+            top: 10px;
+            left: 50%;
+            transform: translateX(-50%) translateY(-20px);
+            padding: 10px 18px;
+            border-radius: 999px;
+            background: rgba(15, 23, 42, 0.96);
+            border: 1px solid rgba(248, 250, 252, 0.4);
+            color: #e5e7eb;
+            font-size: 13px;
+            font-weight: 700;
+            box-shadow: 0 14px 30px rgba(0, 0, 0, 0.6);
+            opacity: 0;
+            pointer-events: none;
+            z-index: 9999;
+            transition: opacity 0.25s ease-out, transform 0.25s ease-out;
+        }
+
+        /* видимое состояние */
+        .alert-bar.show {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
+
+        /* Типы сообщений (по желанию) */
+        .alert-bar.info {
+            border-color: rgba(96, 165, 250, 0.9);
+        }
+
+        .alert-bar.error {
+            border-color: rgba(248, 113, 113, 0.95);
+        }
+
+        .alert-bar.success {
+            border-color: rgba(74, 222, 128, 0.95);
+        }
+
+
         @media (max-width:920px) {
             .wrap {
                 padding: 12px;
@@ -858,6 +900,7 @@
 </head>
 
 <body>
+    <div id="alertBar" class="alert-bar"></div>
 
     <!-- ===================== MAIN MENU ===================== -->
     <div id="mainMenu" class="main-menu">
@@ -955,7 +998,7 @@
                         <div class="field">
                             <svg width="18" height="18" viewBox="0 0 24 24">
                                 <path fill="currentColor"
-                                      d="M12 12a5 5 0 100-10 5 5 0 000 10zm0 2c-4.4 0-8 2.2-8 4.9V22h16v-3.1c0-2.7-3.6-4.9-8-4.9z" />
+                                    d="M12 12a5 5 0 100-10 5 5 0 000 10zm0 2c-4.4 0-8 2.2-8 4.9V22h16v-3.1c0-2.7-3.6-4.9-8-4.9z" />
                             </svg>
                             <input id="nameInput" type="text" placeholder="Your name" value="Player" />
                         </div>
@@ -1062,10 +1105,29 @@
         const WS_URL = 'wss://frosty-colden.185-234-114-50.plesk.page';
 
         const mainMenu = document.getElementById('mainMenu');
+        const alertBar = document.getElementById('alertBar');
         const lobbyWrap = document.getElementById('lobbyWrap');
         const gameScreen = document.getElementById('gameScreen');
         const playPanel = document.getElementById('playPanel');
         const singlePanel = document.getElementById('singlePanel');
+
+        let alertBarTimer = null;
+
+        function showAlertBar(message, type = 'info', duration = 2500) {
+            if (!alertBar) return;
+            // сбрасываем классы
+            alertBar.className = 'alert-bar';
+            if (type) alertBar.classList.add(type);
+            alertBar.textContent = message;
+
+            // показываем
+            alertBar.classList.add('show');
+
+            if (alertBarTimer) clearTimeout(alertBarTimer);
+            alertBarTimer = setTimeout(() => {
+                alertBar.classList.remove('show');
+            }, duration);
+        }
 
         playPanel.addEventListener('click', () => {
             mainMenu.style.display = 'none';
@@ -1253,7 +1315,7 @@
                         const reason = data.reason || 'server';
 
                         if (reason !== 'game_over') {
-                            alert('You left the room (' + reason + ')');
+                            showAlertBar('Игрок вышел из игры (' + reason + ')', 'info');
                             resetRoomClientState();
                             showMainMenu();
                         } else {
@@ -1264,7 +1326,7 @@
                     }
 
                     case 'error':
-                        alert('Error: ' + (data.message || 'unknown'));
+                        showAlertBar('Error: ' + (data.message || 'unknown'), 'error');
                         break;
                 }
             };
@@ -1394,8 +1456,9 @@
       `;
                 el.querySelector('.join-server').addEventListener('click', () => {
                     if (!hasValidName()) {
-                        alert('Введите никнейм, чтобы присоединиться к игре');
-                        nameInput.focus(); return;
+                        showAlertBar('Введите никнейм, чтобы присоединиться к игре', 'error');
+                        nameInput.focus();
+                        return;
                     }
                     sendWS({
                         type: 'join',
@@ -1417,8 +1480,9 @@
 
         createBtn.addEventListener('click', () => {
             if (!hasValidName()) {
-                alert('Введите никнейм, чтобы создать лобби');
-                nameInput.focus(); return;
+                showAlertBar('Введите никнейм, чтобы создать лобби', 'error');
+                nameInput.focus();
+                return;
             }
             const pcBtn = document.querySelector('.pc-btn.active');
             const playerCount = pcBtn ? parseInt(pcBtn.dataset.count, 10) : 4;
@@ -1438,10 +1502,12 @@
 
         startBtn.addEventListener('click', () => {
             if (!currentRoomId) {
-                alert('Вы ещё не в комнате'); return;
+                showAlertBar('Вы ещё не в комнате', 'error');
+                return;
             }
             if (!isHost) {
-                alert('Только хост может запустить игру'); return;
+                showAlertBar('Только хост может запустить игру', 'error');
+                return;
             }
             sendWS({ type: 'start', room: currentRoomId });
         });
@@ -2642,4 +2708,5 @@
     </script>
 
 </body>
+
 </html>
