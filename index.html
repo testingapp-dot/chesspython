@@ -96,6 +96,12 @@
             margin-top: 14px;
         }
 
+        #nameScreen .name-card h2 {
+            display: block !important;
+            text-align: center !important;
+            width: 100%;
+        }
+
         /* ===================== MAIN MENU ===================== */
 
         .main-menu {
@@ -559,6 +565,13 @@
             box-shadow: 0 12px 30px rgba(42, 139, 214, 0.4);
         }
 
+        #playSplashBtn {
+            color: #ffffff;
+            font-size: 20px;
+            padding: 20px 50px;
+            /* or any size you want */
+        }
+
         .secondary {
             background: linear-gradient(90deg, #2a2f37, #2d3138);
             color: #fff;
@@ -999,11 +1012,11 @@
     <!-- ===================== SPLASH SCREEN ===================== -->
     <div id="splashScreen" class="splash-screen">
         <div class="splash-logo">
-            <img src="favicon.png" alt="Triggle" class="splash-logo-img">
+            <img src="favicon-main.png" alt="Triggle" class="splash-logo-img">
         </div>
-        <div class="splash-sub muted">CHESS GAME</div>
+        <div class="splash-logo">TRIGGLE</div>
         <button id="playSplashBtn" class="primary" style="margin-top:24px;">
-            Play
+            PLAY
         </button>
     </div>
 
@@ -1013,7 +1026,7 @@
             <h2>Ваш никнейм</h2>
             <p class="muted">Он будет виден другим игрокам</p>
             <div class="field">
-                <input id="nicknameInput" type="text" maxlength="20" placeholder="Введите никнейм. Пример: Marlon" />
+                <input id="nicknameInput" type="text" maxlength="20"/>
             </div>
             <button id="enterNameBtn" class="primary" style="margin-top:16px;width:100%;">
                 Enter
@@ -1376,7 +1389,7 @@
             } else {
                 nameScreen.style.display = 'flex';
                 nicknameInput.value = '';
-                nicknameInput.placeholder = 'Введите никнейм. Пример: Marlon';
+                nicknameInput.placeholder = '';
                 nicknameInput.focus();
             }
         });
