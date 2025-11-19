@@ -44,7 +44,7 @@
             color: var(--muted);
         }
 
-        /* ==================== SPLASH + NAME SCREENS ================== */
+        /* ===================== SPLASH + NAME SCREENS ===================== */
 
         .splash-screen,
         .name-screen {
@@ -197,7 +197,6 @@
             width: 100%;
             justify-content: center;
             margin-top: 8px;
-            /* или 10–12px, как понравится */
         }
 
         .profile-extra-row input {
@@ -240,7 +239,6 @@
 
         .enter-btn {
             background: linear-gradient(135deg, #3b82f6, #1d4ed8);
-            /* другой цвет */
             color: #e5e7eb;
         }
 
@@ -883,9 +881,7 @@
             letter-spacing: 0.08em;
             text-transform: uppercase;
             display: block;
-            /* отменяем display:flex */
             text-align: center;
-            /* центрируем текст */
         }
 
         #winnerOverlay p {
@@ -991,7 +987,7 @@
             <h2>Ваш никнейм</h2>
             <p class="muted">Он будет виден другим игрокам</p>
             <div class="field">
-                <input id="nicknameInput" type="text" maxlength="20" placeholder="Введите никнейм. Пример: Player" />
+                <input id="nicknameInput" type="text" maxlength="20" placeholder="Введите никнейм. Пример: Marlon" />
             </div>
             <button id="enterNameBtn" class="primary" style="margin-top:16px;width:100%;">
                 Enter
@@ -1265,7 +1261,7 @@
             playersListCard.style.display = 'block';
             serversListCard.style.display = 'none';
             stopRoomsAutoRefresh();
-            backBtn.style.display = 'none'; // в players-list кнопки Назад нет
+            backBtn.style.display = 'none';
             window.scrollTo(0, 0);
         }
 
@@ -1297,7 +1293,7 @@
         });
 
         // Lobby elements
-        const nameInput = document.getElementById('nameInput'); // скрытый
+        const nameInput = document.getElementById('nameInput'); // hidden
         const roomInput = document.getElementById('roomInput');
         const createBtn = document.getElementById('createBtn');
         const startBtn = document.getElementById('startBtn');
@@ -1343,6 +1339,7 @@
             setNickname(nick);
             nameScreen.style.display = 'none';
             mainMenu.style.display = 'flex';
+            showKeyboard(false, null);
         }
 
         playSplashBtn.addEventListener('click', () => {
@@ -1353,22 +1350,15 @@
             } else {
                 nameScreen.style.display = 'flex';
                 nicknameInput.value = '';
-                nicknameInput.placeholder = 'Введите никнейм. Пример: Player';
+                nicknameInput.placeholder = 'Введите никнейм. Пример: Marlon';
                 nicknameInput.focus();
             }
         });
 
         enterNameBtn.addEventListener('click', handleEnterNickname);
-        // Show keyboard when nickname input is focused
-        nicknameInput.addEventListener('focus', () => showKeyboard(true, 'nickname'));
-
-// Prevent native keyboard on mobile + open VKB
-        nicknameInput.addEventListener('touchstart', e => { 
-           e.preventDefault();
-           nicknameInput.blur();
-           showKeyboard(true, 'nickname');
+        nicknameInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') handleEnterNickname();
         });
-
 
         /* ===== IndexedDB for name & avatar ===== */
         let dbPromise = null;
@@ -1611,7 +1601,6 @@
                     const actions = document.createElement('div');
                     actions.className = 'player-actions';
 
-                    // только хост может кикать других
                     if (isHost && p.index !== currentPlayerIndex) {
                         const kickBtn = document.createElement('button');
                         kickBtn.className = 'small-btn';
@@ -1688,7 +1677,7 @@
             const pcBtn = document.querySelector('.pc-btn.active');
             const playerCount = pcBtn ? parseInt(pcBtn.dataset.count, 10) : 4;
             roomMaxPlayers = playerCount;
-            roomMinPlayers = playerCount; // ровно столько игроков
+            roomMinPlayers = playerCount;
 
             const roomId = roomInput.value.trim() || 'room';
             sendWS({
@@ -1737,7 +1726,8 @@
 
         /* ===== Virtual keyboard ===== */
         const vkb = document.getElementById('vkb');
-        const rows = ['123456789', 'qwertyuiop', 'asdfghjkl', 'zxcvbnm'];
+        const rows = ['1234567890', 'qwertyuiop', 'asdfghjkl', 'zxcvbnm'];
+
         function buildKeyboard() {
             document.getElementById('row1').innerHTML = rows[0].split('').map(k => `<div class="key" data-key="${k}">${k}</div>`).join('');
             document.getElementById('row2').innerHTML = rows[1].split('').map(k => `<div class="key" data-key="${k}">${k}</div>`).join('');
@@ -1754,48 +1744,73 @@
 
         let activeField = null;
         function showKeyboard(show, field = null) {
-            if (show) { vkb.classList.add('show'); activeField = field; vkb.setAttribute('aria-hidden', 'false'); }
-            else { vkb.classList.remove('show'); activeField = null; vkb.setAttribute('aria-hidden', 'true'); }
+            if (show) {
+                vkb.classList.add('show');
+                activeField = field;
+                vkb.setAttribute('aria-hidden', 'false');
+            } else {
+                vkb.classList.remove('show');
+                activeField = null;
+                vkb.setAttribute('aria-hidden', 'true');
+                roomInput.blur();
+                if (nicknameInput) nicknameInput.blur();
+                if (typeof profileNameInput !== 'undefined' && profileNameInput) profileNameInput.blur();
+            }
         }
 
         function handleVirtualKey(key) {
             if (!activeField) return;
+
+            const maxLen = 20;
+            const targets = {
+                room: roomInput,
+                nickMain: nicknameInput,
+                nickProfile: (typeof profileNameInput !== 'undefined' ? profileNameInput : null)
+            };
+            const input = targets[activeField];
+
+            if (!input) return;
+
             if (key === 'BACK') {
-                if (activeField === 'room') {
-                    roomInput.value = roomInput.value.slice(0, -1);
-                }
+                input.value = input.value.slice(0, -1);
                 return;
             }
-            if (key === 'ENTER') { showKeyboard(false, null); return; }
+
+            if (key === 'ENTER') {
+                if (activeField === 'nickMain') {
+                    handleEnterNickname();
+                } else if (activeField === 'nickProfile') {
+                    saveProfileNickname();
+                }
+                showKeyboard(false, null);
+                return;
+            }
+
             if (key === ' ') {
-                if (activeField === 'room') {
-                    roomInput.value += ' ';
+                if (input.value.length < maxLen) {
+                    input.value += ' ';
                 }
                 return;
             }
-            if (activeField === 'room') {
-                if (roomInput.value.length < 20) roomInput.value += key;
+
+            if (input.value.length < maxLen) {
+                input.value += key;
             }
         }
 
         roomInput.addEventListener('focus', () => showKeyboard(true, 'room'));
 
         document.addEventListener('click', e => {
-    if (
-        !e.target.closest('.field') &&
-        !e.target.closest('.vkb') &&
-        e.target !== nicknameInput &&
-        e.target !== profileNameInput
-    ) {
-        showKeyboard(false, null);
-        nicknameInput.blur();
-        profileNameInput.blur();
-        roomInput.blur();
-    }
-});
+            if (!e.target.closest('.field') && !e.target.closest('.vkb')) {
+                showKeyboard(false, null);
+            }
+        });
 
-
-        roomInput.addEventListener('touchstart', e => { e.preventDefault(); roomInput.blur(); showKeyboard(true, 'room'); });
+        roomInput.addEventListener('touchstart', e => {
+            e.preventDefault();
+            roomInput.blur();
+            showKeyboard(true, 'room');
+        });
 
         /* ===== Profile avatar + nickname in pill ===== */
         const profilePill = document.getElementById('profilePill');
@@ -1815,6 +1830,7 @@
             if (willOpen && profileNameInput) {
                 profileNameInput.value = currentNickname;
                 profileNameInput.focus();
+                showKeyboard(true, 'nickProfile');
             }
         });
         uploadAvatarLabel.addEventListener('click', e => e.stopPropagation());
@@ -1827,36 +1843,36 @@
             }
             setNickname(newNick);
             profilePill.classList.remove('open');
+            showKeyboard(false, null);
             showAlertBar('Никнейм обновлён', 'success');
         }
 
         profileNameSaveBtn.addEventListener('click', saveProfileNickname);
-        // Show VKB
-profileNameInput.addEventListener('focus', () => showKeyboard(true, 'profile'));
+        profileNameInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                saveProfileNickname();
+            }
+        });
 
-// Prevent native keyboard
-profileNameInput.addEventListener('touchstart', e => {
-    e.preventDefault();
-    profileNameInput.blur();
-    showKeyboard(true, 'profile');
-});
+        // VKB для nicknameInput и profileNameInput
+        if (nicknameInput) {
+            nicknameInput.addEventListener('focus', () => showKeyboard(true, 'nickMain'));
+            nicknameInput.addEventListener('touchstart', e => {
+                e.preventDefault();
+                nicknameInput.blur();
+                showKeyboard(true, 'nickMain');
+            });
+        }
 
-
-const attachVKB = (inputEl, type) => {
-    inputEl.addEventListener('focus', () => showKeyboard(true, type));
-
-    inputEl.addEventListener('touchstart', e => {
-        e.preventDefault();
-        inputEl.blur();
-        showKeyboard(true, type);
-    });
-};
-
-// Apply
-attachVKB(nicknameInput, 'nickname');
-attachVKB(profileNameInput, 'profile');
-attachVKB(roomInput, 'room');
-
+        if (profileNameInput) {
+            profileNameInput.addEventListener('focus', () => showKeyboard(true, 'nickProfile'));
+            profileNameInput.addEventListener('touchstart', e => {
+                e.preventDefault();
+                profileNameInput.blur();
+                showKeyboard(true, 'nickProfile');
+            });
+        }
 
         const MAX_SIZE = 1024 * 1024;
         avatarInput.addEventListener('change', e => {
@@ -1875,6 +1891,7 @@ attachVKB(roomInput, 'room');
                     await saveToSettings('avatar', dataUrl);
                     applyAvatar(dataUrl);
                     profilePill.classList.remove('open');
+                    showKeyboard(false, null);
                     showAlertBar('Аватар обновлён', 'success');
                 } catch (err) { console.error(err); }
             };
@@ -2636,7 +2653,6 @@ attachVKB(roomInput, 'room');
             updateGameHUD();
             drawImmediate();
 
-            // если нет треугольников — автоматический end turn (single player / локальный)
             if (!hasTrisAfterMove && isSinglePlayer) {
                 localEndTurn();
             }
@@ -2855,7 +2871,6 @@ attachVKB(roomInput, 'room');
 
                             sendWS({ type: 'make_move', room: currentRoomId, path });
 
-                            // если нет треугольников — автоматически end turn (онлайн)
                             if (!hasTrisAfterMove) {
                                 sendWS({ type: 'end_turn', room: currentRoomId });
                                 endTurnBtn.disabled = true;
@@ -2968,5 +2983,3 @@ attachVKB(roomInput, 'room');
 </body>
 
 </html>
-
-
